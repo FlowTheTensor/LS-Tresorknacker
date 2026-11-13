@@ -40,8 +40,8 @@ Erstellt für den Unterricht an der Jakob-Preh-Schule ([bsnes.de](https://www.bs
 | 4 Schließfachraum | Arrays (S. 33–36) | Schließfachprofi | Regal füllen · Maximum suchen · Rückwärts ausgeben · Mittelwert mit double · Fehler: i <= 5 |
 | 5 Lagerhalle | vector (S. 40) | Lagerist | Beispiel aus dem Skript · push_back · insert und erase · vector mit Startwerten · Fehler: Index statt push_back · Fehler: size() − 1 bei leerem vector |
 | 6 Spiegelsaal | Funktionen, Geltungsbereich (S. 41–45) | Schlossknacker | Lokal und global (Skript S. 45) · Nur eine Kopie · Rückgabewert · Variable im Block · Fehler: i nach der Schleife |
-| 7 Funkraum | Zeichenketten (S. 50) | Funker | Karl-Heinz (Skript) · Zeichen für Zeichen · Zeichen zählen bis '\0' · strcpy · string statt char-Array · Fehler: '\0' vergessen · Fehler: = statt strcpy · Fehler: strcpy zu lang |
-| 8 Archiv | struct (S. 51) | Archivar | Adresse (Skript) · Verschachtelt: schueler · Eine Kopie der Karteikarte · Längster Film (Array von structs) · Struktur an eine Funktion |
+| 7 Funkraum | Zeichenketten (S. 50) | Funker | Karl-Heinz (Skript) · Zeichen für Zeichen · Zeichen zählen bis '\0' · string statt char-Array · string zuweisen und kopieren · strings vergleichen · Fehler: '\0' vergessen · Fehler: Text mit = in ein char-Array |
+| 8 Archiv | struct (S. 51) | Archivar | Adresse (Skript, mit string) · Verschachtelt: schueler · Eine Kopie der Karteikarte · Längster Film (Array von structs) · Text-Komponenten einfach kopieren · Struktur an eine Funktion |
 | 9 Labyrinth | Zeiger (S. 52–54, 68) | Pfadfinder | Adresse und Inhalt · Zwei Wegweiser, ein Ziel · Adresse ausgeben · call by reference (Skript S. 54) · Tauschen mit Zeigern · Zeiger auf struct: -> · Zeiger durch ein Array · Fehler: Zeiger ohne Ziel · Fehler: Nullzeiger |
 | 10 Kesselraum | Überlauf und Grenzen (S. 8–9, Gleitpunktzahlen) | Kesselmeister | char läuft über · char als Schleifenzähler · int an der Grenze · 0.1 + 0.2 · Groß und klein (ASCII) |
 | 11 Tresorraum | Dateiarbeit mit C++-Datenströmen (S. 58) | Tresorknacker | Datei kopieren (Skript) · Zahlen aus einer Datei summieren · Das Passwort in Zeile 3 (getline) · Anhängen mit ios::app · Tippfehler im Dateinamen · ofstream löscht den Inhalt |
@@ -60,8 +60,7 @@ Datentypen sind char, int und double wie im Skript, dazu ab Raum 5 vector, char-
 | Index statt push_back | `v[0] = 5;` bei leerem vector: Zugriff außerhalb |
 | size() − 1 bei leerem vector | `v.size() - 1` ist unsigned: 0 − 1 wird 4294967295, die Schleife läuft los |
 | '\0' vergessen | cout liest über das char-Array hinaus |
-| = statt strcpy | `vorname = "Karl";` geht bei char-Arrays nicht |
-| strcpy zu lang | strcpy schreibt über das Ende des Arrays hinaus |
+| Text mit = in ein char-Array | `vorname = "Karl";` geht bei char-Arrays nicht – mit `string` schon |
 | Zeiger ohne Ziel / Nullzeiger | `*p` ohne gültige Adresse lässt das Programm abstürzen |
 
 ### Kesselraum: Überlauf
@@ -81,12 +80,12 @@ Datentypen sind char, int und double wie im Skript, dazu ab Raum 5 vector, char-
   - Bei `push_back`, `pop_back`, `insert(v.begin()+k, x)`, `erase(...)` und `clear()` sieht man, wie Elemente nachrücken.
   - Die for-each-Schleife `for (int x : v)` ist auch dabei.
 - **Funkraum (Zeichenketten):**
-  - char-Arrays erscheinen Zeichen für Zeichen, das Endezeichen `'\0'` ist blau markiert.
-  - `cout`, `strlen` und `strcpy` werten bis zum `'\0'` aus.
-  - Fehlt das `'\0'` oder ist das Ziel zu klein, bricht das Programm mit Erklärung ab.
-  - Die string-Klasse kommt nur kurz vor, weil sie in Raum 11 gebraucht wird.
+  - Zuerst kurz der C-String aus dem Skript: das char-Array mit Endezeichen `'\0'` (blau markiert), `cout` und `strlen` bis zum `'\0'`, der Fehler „'\0' vergessen“.
+  - Danach der Datentyp `string`: zuweisen mit `=`, kopieren, `+=`, `push_back`, `size()`, vergleichen mit `==`.
+  - `strcpy` kommt bewusst nicht vor, es kann über das Arrayende schreiben (und `strncpy` setzt bei zu langem Text kein `'\0'`). Texte werden als `string` einfach kopiert.
 - **Archiv (struct):**
   - Strukturvariablen erscheinen als Karteikarten mit ihren Komponenten, auch verschachtelt und als Array von structs.
+  - Text-Komponenten sind `string` statt char-Array: `a1.strasse = "Hauptstr";` funktioniert direkt, ohne `<cstring>`.
   - Beim Zuweisen und bei der Übergabe an Funktionen wird kopiert.
 - **Labyrinth (Zeiger):**
   - Jede Variable zeigt ihre (simulierte) Adresse.
@@ -122,7 +121,7 @@ Beispiele für Prüfungsaufgaben (alle mit Zufallswerten):
 | 4 | Element eines gefüllten Arrays · Summe · Maximum · rückwärts · laufende Summe · Mittelwert mit double |
 | 5 | push_back und pop_back mit size() · insert und erase an zufälliger Position · vector(n, w) mit for-each · Quadratzahlen anhängen |
 | 6 | global und lokal · Wertparameter · Rückgabewert · verdeckte Variable im Block · lokale Variable gleichen Namens in Funktion und main · globaler Zähler |
-| 7 | Zeichen an Position k und strlen · Buchstaben zählen bis '\0' · strcpy und Zeichen ersetzen · '\0' kürzt den Text · string mit push_back |
+| 7 | Zeichen an Position k und strlen · Buchstaben zählen bis '\0' · '\0' kürzt den Text · string kopieren und ändern · strings verknüpfen und vergleichen · string mit push_back |
 | 8 | Kopie einer Struktur · Rechnen mit Komponenten · größter Messwert im Array von structs · Struktur als Wertparameter · verschachtelte Strukturen |
 | 9 | Ändern über *p · Zeiger umstellen · Tauschen mit Zeigern · Zeiger- gegen Wertparameter · Referenzparameter · Zeiger durch ein Array · Zeiger auf struct mit -> |
 | 10 | char-Überlauf nach oben und unten · char als Schleifenzähler · int-Grenze · Gleitpunktvergleich exakt oder nicht · Groß-/Kleinbuchstaben über ASCII |
@@ -189,7 +188,7 @@ Programme mit eigenen Funktionen, structs oder globalen Variablen schreibt man m
 - `if`/`else`, `while`, `do-while`, `for`, for-each, `break`, `continue`
 - Funktionen mit `return`
 - `cout`, `fstream`/`ifstream`/`ofstream`
-- `strlen` und `strcpy`
+- `strlen` für C-Strings (`strcpy` wird zwar verstanden, kommt in den Rätseln aber bewusst nicht vor)
 - Typumwandlung mit `(int)` bzw. `int(...)`
 
 Eingaben mit `cin` gibt es bewusst nicht, jedes Rätsel hat genau eine Lösung.
@@ -211,4 +210,5 @@ Am einfachsten in VS Code mit der Erweiterung **Live Server**: Rechtsklick auf `
   - Ein Zugriff außerhalb eines Arrays bricht das Programm ab, ebenso eine Ausgabe ohne '\0' und ein Zeiger ohne gültiges Ziel. Ein echtes Programm läuft dabei oft unbemerkt weiter oder gibt Unsinn aus.
   - Adressen sind simuliert (32 Bit wie im Skript, Zeiger 4 Byte). Dynamischer Speicher (new/delete) kommt nicht vor.
   - Fehler, die eigentlich schon der Compiler meldet (z. B. eine unbekannte Variable), zeigt die Simulation erst beim Erreichen der Zeile.
+- `#include <string>` steht in allen Rätseln mit `string`. Bei den üblichen Compilern (g++/Code::Blocks, Visual Studio) klappt `string` meist auch ohne, weil `<iostream>` es mitbringt. Vom C++-Standard garantiert ist das aber nicht.
 - Fehler in `draw()` werden abgefangen und als Hinweis angezeigt, statt das Programm einzufrieren.

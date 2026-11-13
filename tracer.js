@@ -1352,7 +1352,7 @@ function fuehreAus(src, opt) {
       case "array":
         throw new CppFehler(
           t.elem.k === "basis" && t.elem.name === "char"
-            ? `Einem char-Array kann man mit = keinen Text zuweisen – dafür gibt es strcpy(${z.label}, "…") aus <cstring>.`
+            ? `Einem char-Array kann man mit = keinen Text zuweisen – ein Array lässt sich nicht als Ganzes zuweisen. Einfacher ist der Datentyp string: string ${z.label}; ${z.label} = "…"; funktioniert.`
             : "Einem ganzen Array kann man nichts zuweisen – nur einzelnen Elementen.",
           zeile
         );

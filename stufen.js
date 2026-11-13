@@ -1169,16 +1169,6 @@ Object.assign(RAETSEL, {
       ),
     },
     {
-      titel: "strcpy",
-      code: mainProg(
-        ["iostream", "cstring"],
-        `  char ziel[10];
-  strcpy(ziel, "Funk");
-  ziel[0] = 'P';
-  cout << ziel << " " << strlen(ziel);`
-      ),
-    },
-    {
       titel: "string statt char-Array",
       code: mainProg(
         ["iostream", "string"],
@@ -1186,6 +1176,32 @@ Object.assign(RAETSEL, {
   s.push_back('k');
   s += "raum";
   cout << s << " " << s.size();`
+      ),
+    },
+    {
+      titel: "string zuweisen und kopieren",
+      code: mainProg(
+        ["iostream", "string"],
+        `  string a = "Funk";
+  string b = a;
+  b += "raum";
+  a[0] = 'P';
+  cout << a << " " << b << " " << b.size();`
+      ),
+    },
+    {
+      titel: "strings vergleichen",
+      code: mainProg(
+        ["iostream", "string"],
+        `  string passwort = "Kabel";
+  string eingabe = "kabel";
+  if (passwort == eingabe)
+    cout << "offen";
+  else
+    cout << "zu";
+  eingabe[0] = 'K';
+  if (passwort == eingabe)
+    cout << " offen";`
       ),
     },
     {
@@ -1200,7 +1216,7 @@ Object.assign(RAETSEL, {
       ),
     },
     {
-      titel: "Fehler: = statt strcpy",
+      titel: "Fehler: Text mit = in ein char-Array",
       code: mainProg(
         ["iostream"],
         `  char vorname[20];
@@ -1208,25 +1224,16 @@ Object.assign(RAETSEL, {
   cout << vorname;`
       ),
     },
-    {
-      titel: "Fehler: strcpy zu lang",
-      code: mainProg(
-        ["iostream", "cstring"],
-        `  char name[5];
-  strcpy(name, "Funkraum");
-  cout << name;`
-      ),
-    },
   ],
   archiv: [
     {
       titel: "Adresse (Skript)",
       code: prog(
-        ["iostream", "cstring"],
+        ["iostream", "string"],
         [
           "struct adresse",
           "{",
-          "  char strasse[20];",
+          "  string strasse;",
           "  int hausnummer;",
           "  int postleitzahl;",
           "};",
@@ -1234,7 +1241,7 @@ Object.assign(RAETSEL, {
           "{",
           "  struct adresse a1;",
           "  a1.hausnummer = 10;",
-          '  strcpy(a1.strasse, "Hauptstr");',
+          '  a1.strasse = "Hauptstr";',
           '  struct adresse a2 = {"Poststrasse", 30, 97616};',
           '  cout << a1.strasse << " " << a1.hausnummer << " ";',
           "  cout << a2.postleitzahl;",
@@ -1246,16 +1253,16 @@ Object.assign(RAETSEL, {
     {
       titel: "Verschachtelt: schueler",
       code: prog(
-        ["iostream"],
+        ["iostream", "string"],
         [
           "struct adresse",
           "{",
-          "  char strasse[20];",
+          "  string strasse;",
           "  int hausnummer;",
           "};",
           "struct schueler",
           "{",
-          "  char vorname[20];",
+          "  string vorname;",
           "  struct adresse wohnort;",
           "};",
           "int main()",
@@ -1279,11 +1286,11 @@ Object.assign(RAETSEL, {
     {
       titel: "Längster Film (Array von structs)",
       code: prog(
-        ["iostream"],
+        ["iostream", "string"],
         [
           "struct film",
           "{",
-          "  char titel[12];",
+          "  string titel;",
           "  int laufzeit;",
           "};",
           "int main()",
@@ -1299,6 +1306,13 @@ Object.assign(RAETSEL, {
           "  return 0;",
           "}",
         ]
+      ),
+    },
+    {
+      titel: "Text-Komponenten einfach kopieren",
+      code: prog(
+        ["iostream", "string"],
+        ["struct film", "{", "  string titel;", "  int laufzeit;", "};", "int main()", "{", '  film a = {"Matrix", 136};', "  film b = a;", '  b.titel = b.titel + " 2";', "  b.laufzeit = 138;", '  cout << a.titel << " / " << b.titel;', "  return 0;", "}"]
       ),
     },
     {
@@ -1398,7 +1412,7 @@ Object.assign(RAETSEL, {
       titel: "Datei kopieren (Skript)",
       dateien: { "input.txt": "Root\nPasswort" },
       code: mainProg(
-        ["iostream", "fstream"],
+        ["iostream", "fstream", "string"],
         `  string ausgelesen;
   fstream dateistrom("input.txt", ios::in);
   ofstream ausgabe("output.txt", ios::out | ios::trunc);
@@ -1504,7 +1518,8 @@ Object.assign(PRUEF_MC, {
   funk: [
     ["Wie viele Plätze braucht der Text „Funk“ in einem char-Array?", ["5", "4", "6", "3"], "4 Zeichen plus das Endezeichen '\\0'."],
     ["Woran erkennt cout das Ende einer Zeichenkette in einem char-Array?", ["am Endezeichen '\\0'", "an der Arraygröße", "an einem Leerzeichen", "an einem Punkt"], "Ohne '\\0' liest cout einfach weiter im Speicher."],
-    ["char name[20]; Wie bekommt name den Text „Ute“?", ["strcpy(name, \"Ute\");", "name = \"Ute\";", "name[20] = \"Ute\";", "name == \"Ute\";"], "Einem Array kann man mit = nichts zuweisen."],
+    ["string name; Wie bekommt name den Text „Ute“?", ["name = \"Ute\";", "name == \"Ute\";", "name[20] = \"Ute\";", "Das geht nur Zeichen für Zeichen."], "Einem string kann man einen Text einfach mit = zuweisen – anders als einem char-Array."],
+    ["string a = \"Port\"; string b = a; b[0] = 'F'; Was steht danach in a?", ["Port", "Fort", "nichts", "F"], "b = a erzeugt eine eigene Kopie."],
     ["Was liefert strlen(\"Labor\")?", ["5", "6", "4", "20"], "strlen zählt die Zeichen ohne das '\\0'."],
     ["char wort[] = \"Port\"; Was steht in wort[4]?", ["'\\0'", "'t'", "nichts – es gibt kein wort[4]", "ein zufälliger Wert"], "Das Array hat 5 Elemente: P, o, r, t und '\\0'."],
   ],
@@ -1512,7 +1527,7 @@ Object.assign(PRUEF_MC, {
     ["Wie greift man auf die Komponente hausnummer der Strukturvariable a1 zu?", ["a1.hausnummer", "a1->hausnummer", "hausnummer.a1", "a1[hausnummer]"], "Der Punkt-Operator verbindet Variable und Komponente."],
     ["Wo steht die Definition eines struct-Typs?", ["vor main, mit ; nach der }", "in main nach return", "in einer eigenen Datei, ohne ;", "hinter dem Programmende"], "Siehe Skript S. 51."],
     ["punkt b = a; Danach wird b.x geändert. Was passiert mit a.x?", ["Nichts – b ist eine Kopie", "a.x ändert sich mit", "Das Programm stürzt ab", "a.x wird 0"], "Beim Zuweisen einer Struktur wird jede Komponente kopiert."],
-    ["Welche Datentypen dürfen in einem struct stehen?", ["beliebige, auch Arrays und andere structs", "nur int", "nur gleiche Datentypen", "nur char-Arrays"], "Genau das ist der Unterschied zum Array."],
+    ["Welche Datentypen dürfen in einem struct stehen?", ["beliebige, auch string, Arrays und andere structs", "nur int", "nur gleiche Datentypen", "nur Zahlen"], "Genau das ist der Unterschied zum Array."],
   ],
   labyrinth: [
     ["Was bedeutet &zahl?", ["die Adresse von zahl", "der Inhalt von zahl", "zahl wird verdoppelt", "eine Referenz auf 0"], "& liest man „Adresse von“."],
@@ -1653,13 +1668,13 @@ Object.assign(GENERATOREN, {
       const j = zufall(0, w.length - 1);
       return ausgabeFrage(
         mainProg(
-          ["iostream", "cstring"],
-          `  char ziel[12];
-  strcpy(ziel, "${w}");
+          ["iostream", "string"],
+          `  string ziel = "${w}";
+  string kopie = ziel;
   ziel[${j}] = 'x';
-  cout << ziel;`
+  cout << ziel << " " << kopie;`
         ),
-        `strcpy kopiert „${w}“ samt '\\0', danach wird Element ${j} überschrieben.`
+        `kopie ist eine eigene Kopie. Nur in ziel wird Zeichen ${j} zu x.`
       );
     },
     () => {
@@ -1668,12 +1683,29 @@ Object.assign(GENERATOREN, {
       return ausgabeFrage(
         mainProg(
           ["iostream", "cstring"],
-          `  char kurz[10];
-  strcpy(kurz, "${w}");
+          `  char kurz[] = "${w}";
   kurz[${k}] = '\\0';
   cout << kurz << " " << strlen(kurz);`
         ),
         `Das '\\0' an Position ${k} beendet die Zeichenkette vorzeitig: Es bleiben ${k} Zeichen.`
+      );
+    },
+    () => {
+      const a = waehle(WOERTER).toLowerCase();
+      const b = waehle(WOERTER).toLowerCase();
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "string"],
+          `  string a = "${a}";
+  string b = "${b}";
+  string c = a + "-" + b;
+  if (a == b)
+    cout << 1 << " ";
+  else
+    cout << 0 << " ";
+  cout << c.size();`
+        ),
+        `== vergleicht den Inhalt der strings. c = „${a}-${b}“ hat ${a.length + 1 + b.length} Zeichen.`
       );
     },
     () => {
@@ -1705,7 +1737,7 @@ Object.assign(GENERATOREN, {
       const preis = waehle([1.5, 2.5, 0.5, 4.0, 1.25]);
       const name = waehle(["Kabel", "Stecker", "Switch", "Platine"]);
       return ausgabeFrage(
-        prog(["iostream"], ["struct artikel", "{", "  char name[10];", "  int menge;", "  double preis;", "};", "int main()", "{", `  artikel a = {"${name}", ${m}, ${Number.isInteger(preis) ? preis.toFixed(1) : preis}};`, "  a.menge = a.menge + 1;", '  cout << a.name << " " << a.menge * a.preis;', "  return 0;", "}"]),
+        prog(["iostream", "string"], ["struct artikel", "{", "  string name;", "  int menge;", "  double preis;", "};", "int main()", "{", `  artikel a = {"${name}", ${m}, ${Number.isInteger(preis) ? preis.toFixed(1) : preis}};`, "  a.menge = a.menge + 1;", '  cout << a.name << " " << a.menge * a.preis;', "  return 0;", "}"]),
         `menge wird ${m + 1}, mal ${preis} ergibt ${(m + 1) * preis}.`
       );
     },
@@ -1747,7 +1779,7 @@ Object.assign(GENERATOREN, {
       const m = zufall(0, 40);
       const k = zufall(5, 15);
       return ausgabeFrage(
-        prog(["iostream"], ["struct zeit", "{", "  int h;", "  int m;", "};", "struct termin", "{", "  char titel[8];", "  zeit beginn;", "};", "int main()", "{", `  termin t = {"Labor", {${h}, ${m}}};`, `  t.beginn.m = t.beginn.m + ${k};`, '  cout << t.titel << " " << t.beginn.h << " " << t.beginn.m;', "  return 0;", "}"]),
+        prog(["iostream", "string"], ["struct zeit", "{", "  int h;", "  int m;", "};", "struct termin", "{", "  string titel;", "  zeit beginn;", "};", "int main()", "{", `  termin t = {"Labor", {${h}, ${m}}};`, `  t.beginn.m = t.beginn.m + ${k};`, '  cout << t.titel << " " << t.beginn.h << " " << t.beginn.m;', "  return 0;", "}"]),
         `Verschachtelter Zugriff: t.beginn.m wird ${m} + ${k} = ${m + k}.`
       );
     },

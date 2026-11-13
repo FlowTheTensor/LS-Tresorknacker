@@ -62,8 +62,8 @@ function erstelleUi() {
   let bx = 104;
   STUFEN.forEach((st, i) => {
     const text = `${i + 1} ${st.kurz}`;
-    const b = 22 + (text.length + 2) * 8.4;
-    const knopf = platziere(createButton(text), bx, 63, b, "beispiel");
+    const b = 22 + Math.max((text.length + 2) * 8.4, st.themaKurz.length * 7);
+    const knopf = platziere(createButton(raumKnopf(i, false)), bx, 62, b, "beispiel");
     knopf.attribute("title", `Raum ${i + 1}: ${st.name} (${st.thema}) – Freigabe als ${st.rang}`);
     knopf.mousePressed(() => {
       stufeWechseln(i);
@@ -194,6 +194,12 @@ function befuelleAuswahl() {
   RAETSEL[STUFEN[stufe].id].forEach((r, i) => ui.beispiel.option(`Rätsel ${i + 1}: ${r.titel}`, String(i)));
 }
 
+// Raum-Reiter: oben Nummer und Name, darunter das Thema
+function raumKnopf(i, siegel) {
+  const st = STUFEN[i];
+  return `<span class="raum">${i + 1} ${st.kurz}${siegel ? " ✓" : ""}</span><span class="thema">${st.themaKurz}</span>`;
+}
+
 function beschrifte(el, html) {
   if (el._html !== html) {
     el.html(html);
@@ -223,7 +229,7 @@ function aktualisiereUi() {
   klasse(ui.modusPruef, "aktiv", !ueben);
   ui.stufen.forEach((k, i) => {
     klasse(k, "aktiv", i === stufe);
-    beschrifte(k, `${i + 1} ${STUFEN[i].kurz}${freigaben[i] ? " ✓" : ""}`);
+    beschrifte(k, raumKnopf(i, freigaben[i]));
   });
 
   zeige(ui.beispiel, ueben);

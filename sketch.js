@@ -27,7 +27,7 @@
 // =============================================================================
 
 const W = 1600;
-const LEISTE = 48;
+const LEISTE = 64;
 const H_INHALT = 900;
 const H = H_INHALT + LEISTE;
 let S = 1;
@@ -589,11 +589,11 @@ function zeichneStufenLeiste() {
   textStyle(BOLD);
   textSize(15);
   textAlign(LEFT, CENTER);
-  text("Stufe", 26, 56 + LEISTE / 2);
+  text("Raum", 26, 56 + LEISTE / 2);
   textStyle(NORMAL);
   stroke(...FARBE.akzent);
   strokeWeight(2);
-  const px = 26 + textWidth("Stufe") + 10;
+  const px = 26 + textWidth("Raum") + 10;
   const py = 56 + LEISTE / 2;
   line(px, py - 5, px + 5, py);
   line(px + 5, py, px, py + 5);
