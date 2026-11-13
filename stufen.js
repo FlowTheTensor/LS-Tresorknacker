@@ -13,6 +13,7 @@ const STUFEN = [
   {
     id: "eingang",
     name: "Eingangshalle",
+    kurz: "Halle",
     rang: "Neuling",
     thema: "Variablen und Datentypen",
     untertitel: "Raum 1 · Eingangshalle: int, char und double",
@@ -21,6 +22,7 @@ const STUFEN = [
   {
     id: "bibliothek",
     name: "Bibliothek",
+    kurz: "Bibliothek",
     rang: "Spurensucher",
     thema: "Verzweigungen",
     untertitel: "Raum 2 · Bibliothek: if, else if und else",
@@ -29,6 +31,7 @@ const STUFEN = [
   {
     id: "uhren",
     name: "Uhrenzimmer",
+    kurz: "Uhren",
     rang: "Rätsellöser",
     thema: "Schleifen",
     untertitel: "Raum 3 · Uhrenzimmer: for, while und do-while",
@@ -37,26 +40,74 @@ const STUFEN = [
   {
     id: "schliessfach",
     name: "Schließfachraum",
+    kurz: "Fächer",
     rang: "Schließfachprofi",
     thema: "Arrays",
     untertitel: "Raum 4 · Schließfachraum: Arrays und Index",
     auftrag: "Eine Reihe Schließfächer, nummeriert ab 0. Verfolge, welches Fach gerade geöffnet wird – und denk daran: Das letzte Fach hat die Nummer Länge − 1.",
   },
   {
+    id: "lager",
+    name: "Lagerhalle",
+    kurz: "Lager",
+    rang: "Lagerist",
+    thema: "vector",
+    untertitel: "Raum 5 · Lagerhalle: vector mit push_back, insert und erase",
+    auftrag: "Das Förderband der Lagerhalle wächst und schrumpft: push_back legt hinten an, insert schiebt dazwischen, erase nimmt heraus. Verfolge Inhalt und Größe des vectors.",
+  },
+  {
     id: "spiegel",
     name: "Spiegelsaal",
+    kurz: "Spiegel",
     rang: "Schlossknacker",
     thema: "Funktionen und Geltungsbereich",
-    untertitel: "Raum 5 · Spiegelsaal: Funktionen, lokale und globale Variablen",
+    untertitel: "Raum 6 · Spiegelsaal: Funktionen, lokale und globale Variablen",
     auftrag: "Im Spiegelsaal heißen manche Variablen gleich – sind aber verschiedene. Schau genau, in welchem Bereich (global, main, Funktion, Block) eine Variable gilt.",
+  },
+  {
+    id: "funk",
+    name: "Funkraum",
+    kurz: "Funk",
+    rang: "Funker",
+    thema: "Zeichenketten",
+    untertitel: "Raum 7 · Funkraum: Zeichenketten als char-Array mit '\\0'",
+    auftrag: "Im Funkraum kommen Nachrichten Zeichen für Zeichen an. Eine Zeichenkette ist ein char-Array – und erst das Endezeichen '\\0' sagt, wo der Text aufhört.",
+  },
+  {
+    id: "archiv",
+    name: "Archiv",
+    kurz: "Archiv",
+    rang: "Archivar",
+    thema: "struct",
+    untertitel: "Raum 8 · Archiv: eigene Datenstrukturen mit struct",
+    auftrag: "Jede Karteikarte im Archiv ist eine Strukturvariable mit mehreren Komponenten. Mit dem Punkt-Operator kommst du an die einzelnen Einträge.",
+  },
+  {
+    id: "labyrinth",
+    name: "Labyrinth",
+    kurz: "Labyrinth",
+    rang: "Pfadfinder",
+    thema: "Zeiger",
+    untertitel: "Raum 9 · Labyrinth: Zeiger, Adressen und call by reference",
+    auftrag: "Im Labyrinth zeigen Wegweiser auf andere Orte. Ein Zeiger speichert eine Adresse: & heißt „Adresse von“, * heißt „Inhalt der Adresse, auf die … zeigt“.",
   },
   {
     id: "kessel",
     name: "Kesselraum",
-    rang: "Tresorknacker",
+    kurz: "Kessel",
+    rang: "Kesselmeister",
     thema: "Überlauf und Grenzen",
-    untertitel: "Raum 6 · Kesselraum: Überlauf, Wertebereiche und Rundungsfehler",
-    auftrag: "Hier steht der Tresor. Der Druck steigt, bis der Zeiger überschlägt: Was passiert, wenn ein Wert nicht mehr in seinen Datentyp passt?",
+    untertitel: "Raum 10 · Kesselraum: Überlauf, Wertebereiche und Rundungsfehler",
+    auftrag: "Der Druck steigt, bis der Zeiger überschlägt: Was passiert, wenn ein Wert nicht mehr in seinen Datentyp passt?",
+  },
+  {
+    id: "tresor",
+    name: "Tresorraum",
+    kurz: "Tresor",
+    rang: "Tresorknacker",
+    thema: "Dateiarbeit",
+    untertitel: "Raum 11 · Tresorraum: Dateien lesen und schreiben mit fstream",
+    auftrag: "Im Tresor liegt das Root-Passwort des Laborservers – in einer Datei. Verfolge, was das Programm aus den Dateien liest und was es hineinschreibt.",
   },
 ];
 
@@ -442,16 +493,25 @@ function mc(frage, optionen, erklaerung, code) {
 }
 
 // Ausgabe-Frage: Antwort wird mit dem Interpreter berechnet
-function ausgabeFrage(code, erklaerung) {
-  const lauf = fuehreAus(code);
-  if (lauf.fehler || /\?/.test(lauf.ausgabe)) {
+function ausgabeFrage(code, erklaerung, dateien) {
+  const lauf = fuehreAus(code, { dateien });
+  if (lauf.fehler || /\?/.test(lauf.ausgabe) || !ausgabeNormal(lauf.ausgabe)) {
     return null;
   }
-  return { art: "text", frage: "Welchen Code zeigt das Schloss? Gib die komplette Ausgabe ein (Zeilenumbrüche als Leerzeichen).", antwort: ausgabeNormal(lauf.ausgabe), erklaerung, code };
+  return { art: "text", frage: "Welchen Code zeigt das Schloss? Gib die komplette Ausgabe ein (Zeilenumbrüche als Leerzeichen).", antwort: ausgabeNormal(lauf.ausgabe), erklaerung, code, dateien: dateien || null };
+}
+
+// Frage nach dem Inhalt einer Datei nach dem Programm
+function dateiFrage(code, datei, erklaerung, dateien) {
+  const lauf = fuehreAus(code, { dateien });
+  if (lauf.fehler || lauf.dateien[datei] === undefined) {
+    return null;
+  }
+  return { art: "text", frage: `Was steht nach dem Programm in der Datei ${datei}? (Zeilenumbrüche als Leerzeichen)`, antwort: ausgabeNormal(lauf.dateien[datei]), erklaerung, code, dateien: dateien || null };
 }
 
 function zahlFrage(code, frage, antwortFn, erklaerung) {
-  const lauf = fuehreAus(code);
+  const lauf = fuehreAus(code, {});
   if (lauf.fehler) {
     return null;
   }
@@ -962,6 +1022,916 @@ const GENERATOREN = {
     },
   ],
 };
+
+// =============================================================================
+// Neue Räume: Lagerhalle (vector), Funkraum (Zeichenketten), Archiv (struct),
+// Labyrinth (Zeiger), Tresorraum (Dateiarbeit)
+// =============================================================================
+
+// Programm mit eigenen #include-Zeilen und beliebigem Inhalt
+function prog(includes, zeilen) {
+  return [...includes.map((i) => `#include <${i}>`), "using namespace std;", ...zeilen].join("\n");
+}
+function mainProg(includes, rumpf, vorher) {
+  return prog(includes, [...(vorher || []), "int main()", "{", rumpf, "  return 0;", "}"]);
+}
+
+const WOERTER = ["LABOR", "SERVER", "KABEL", "ROUTER", "SWITCH", "DOCKER", "LINUX", "BINAER", "PORT", "SOCKET", "PAKET", "TRESOR"];
+
+Object.assign(RAETSEL, {
+  lager: [
+    {
+      titel: "Beispiel aus dem Skript",
+      code: mainProg(
+        ["iostream", "vector"],
+        `  vector<int> v = {1, 2, 3, 45, 65};
+  v[2] = 10;
+  for (unsigned int i = 0; i < v.size(); i++)
+  {
+    cout << v[i] << " ";
+  }
+  v.push_back(1);
+  v.pop_back();
+  v.insert(v.begin() + 3, 10);
+  v.erase(v.begin() + 2);
+  v.erase(v.begin(), v.begin() + 2);
+  cout << v.size();`
+      ),
+    },
+    {
+      titel: "push_back füllt das Lager",
+      code: mainProg(
+        ["iostream", "vector"],
+        `  vector<int> lager;
+  for (int i = 1; i <= 4; i++)
+  {
+    lager.push_back(i * 10);
+  }
+  cout << lager.size() << " " << lager[3];`
+      ),
+    },
+    {
+      titel: "insert und erase",
+      code: mainProg(
+        ["iostream", "vector"],
+        `  vector<char> regal = {'A', 'C', 'D'};
+  regal.insert(regal.begin() + 1, 'B');
+  regal.erase(regal.begin() + 3);
+  for (char c : regal)
+  {
+    cout << c;
+  }`
+      ),
+    },
+    {
+      titel: "vector mit Startwerten",
+      code: mainProg(
+        ["iostream", "vector"],
+        `  vector<double> preise(3, 2.5);
+  preise[1] = 4.0;
+  double summe = 0;
+  for (double p : preise)
+  {
+    summe = summe + p;
+  }
+  cout << summe;`
+      ),
+    },
+    {
+      titel: "Fehler: Index statt push_back",
+      code: mainProg(
+        ["iostream", "vector"],
+        `  vector<int> v;
+  v[0] = 5;
+  cout << v[0];`
+      ),
+    },
+    {
+      titel: "Fehler: size() − 1 bei leerem vector",
+      code: mainProg(
+        ["iostream", "vector"],
+        `  vector<int> v;
+  for (unsigned int i = 0; i < v.size() - 1; i++)
+  {
+    cout << v[i];
+  }`
+      ),
+    },
+  ],
+  funk: [
+    {
+      titel: "Karl-Heinz (Skript)",
+      code: mainProg(
+        ["iostream", "cstring"],
+        `  char vorname[20] = "Karl-Heinz";
+  cout << vorname[2] << " ";
+  cout << vorname << " ";
+  cout << strlen(vorname);`
+      ),
+    },
+    {
+      titel: "Zeichen für Zeichen",
+      code: mainProg(
+        ["iostream"],
+        `  char wort[6];
+  wort[0] = 'F';
+  wort[1] = 'u';
+  wort[2] = 'n';
+  wort[3] = 'k';
+  wort[4] = '\\0';
+  wort[0] = 'P';
+  cout << wort;`
+      ),
+    },
+    {
+      titel: "Zeichen zählen bis '\\0'",
+      code: mainProg(
+        ["iostream"],
+        `  char text[] = "Morsecode";
+  int n = 0;
+  for (int i = 0; text[i] != '\\0'; i++)
+  {
+    if (text[i] == 'e')
+      n++;
+  }
+  cout << n;`
+      ),
+    },
+    {
+      titel: "strcpy",
+      code: mainProg(
+        ["iostream", "cstring"],
+        `  char ziel[10];
+  strcpy(ziel, "Funk");
+  ziel[0] = 'P';
+  cout << ziel << " " << strlen(ziel);`
+      ),
+    },
+    {
+      titel: "string statt char-Array",
+      code: mainProg(
+        ["iostream", "string"],
+        `  string s = "Fun";
+  s.push_back('k');
+  s += "raum";
+  cout << s << " " << s.size();`
+      ),
+    },
+    {
+      titel: "Fehler: '\\0' vergessen",
+      code: mainProg(
+        ["iostream"],
+        `  char kurz[3];
+  kurz[0] = 'O';
+  kurz[1] = 'K';
+  kurz[2] = '!';
+  cout << kurz;`
+      ),
+    },
+    {
+      titel: "Fehler: = statt strcpy",
+      code: mainProg(
+        ["iostream"],
+        `  char vorname[20];
+  vorname = "Karl";
+  cout << vorname;`
+      ),
+    },
+    {
+      titel: "Fehler: strcpy zu lang",
+      code: mainProg(
+        ["iostream", "cstring"],
+        `  char name[5];
+  strcpy(name, "Funkraum");
+  cout << name;`
+      ),
+    },
+  ],
+  archiv: [
+    {
+      titel: "Adresse (Skript)",
+      code: prog(
+        ["iostream", "cstring"],
+        [
+          "struct adresse",
+          "{",
+          "  char strasse[20];",
+          "  int hausnummer;",
+          "  int postleitzahl;",
+          "};",
+          "int main()",
+          "{",
+          "  struct adresse a1;",
+          "  a1.hausnummer = 10;",
+          '  strcpy(a1.strasse, "Hauptstr");',
+          '  struct adresse a2 = {"Poststrasse", 30, 97616};',
+          '  cout << a1.strasse << " " << a1.hausnummer << " ";',
+          "  cout << a2.postleitzahl;",
+          "  return 0;",
+          "}",
+        ]
+      ),
+    },
+    {
+      titel: "Verschachtelt: schueler",
+      code: prog(
+        ["iostream"],
+        [
+          "struct adresse",
+          "{",
+          "  char strasse[20];",
+          "  int hausnummer;",
+          "};",
+          "struct schueler",
+          "{",
+          "  char vorname[20];",
+          "  struct adresse wohnort;",
+          "};",
+          "int main()",
+          "{",
+          '  schueler s = {"Ida", {"Ring", 5}};',
+          "  s.wohnort.hausnummer++;",
+          '  cout << s.vorname << " " << s.wohnort.strasse;',
+          '  cout << " " << s.wohnort.hausnummer;',
+          "  return 0;",
+          "}",
+        ]
+      ),
+    },
+    {
+      titel: "Eine Kopie der Karteikarte",
+      code: prog(
+        ["iostream"],
+        ["struct punkt", "{", "  int x;", "  int y;", "};", "int main()", "{", "  punkt a = {1, 2};", "  punkt b = a;", "  b.x = 5;", '  cout << a.x << " " << b.x << " " << b.y;', "  return 0;", "}"]
+      ),
+    },
+    {
+      titel: "Längster Film (Array von structs)",
+      code: prog(
+        ["iostream"],
+        [
+          "struct film",
+          "{",
+          "  char titel[12];",
+          "  int laufzeit;",
+          "};",
+          "int main()",
+          "{",
+          '  film liste[3] = {{"Matrix", 136}, {"Up", 96}, {"Avatar", 162}};',
+          "  int best = 0;",
+          "  for (int i = 1; i < 3; i++)",
+          "  {",
+          "    if (liste[i].laufzeit > liste[best].laufzeit)",
+          "      best = i;",
+          "  }",
+          "  cout << liste[best].titel;",
+          "  return 0;",
+          "}",
+        ]
+      ),
+    },
+    {
+      titel: "Struktur an eine Funktion",
+      code: prog(
+        ["iostream"],
+        ["struct punkt", "{", "  int x;", "  int y;", "};", "void verschiebe(punkt p)", "{", "  p.x = p.x + 10;", '  cout << p.x << " ";', "}", "int main()", "{", "  punkt a = {3, 4};", "  verschiebe(a);", "  cout << a.x;", "  return 0;", "}"]
+      ),
+    },
+  ],
+  labyrinth: [
+    {
+      titel: "Adresse und Inhalt",
+      code: mainProg(
+        ["iostream"],
+        `  int zahl = 7;
+  int *izeiger;
+  izeiger = &zahl;
+  *izeiger = 12;
+  cout << zahl << " " << *izeiger;`
+      ),
+    },
+    {
+      titel: "Zwei Wegweiser, ein Ziel",
+      code: mainProg(
+        ["iostream"],
+        `  int a = 3;
+  int *p = &a;
+  int *q = p;
+  *q = *q + 4;
+  cout << a << " " << *p;`
+      ),
+    },
+    {
+      titel: "Adresse ausgeben",
+      adresse: true,
+      code: mainProg(
+        ["iostream"],
+        `  int zahl = 5;
+  int *p = &zahl;
+  cout << p << " " << *p;`
+      ),
+    },
+    {
+      titel: "call by reference (Skript)",
+      code: prog(
+        ["iostream"],
+        ["void inkrement(int *zeigerAufx)", "{", "  *zeigerAufx = *zeigerAufx + 1;", "}", "void inkrement2(int &z)", "{", "  z = z + 1;", "}", "int main()", "{", "  int x = 5;", "  inkrement(&x);", "  inkrement2(x);", "  cout << x;", "  return 0;", "}"]
+      ),
+    },
+    {
+      titel: "Tauschen mit Zeigern",
+      code: prog(
+        ["iostream"],
+        ["void tausche(int *a, int *b)", "{", "  int hilf = *a;", "  *a = *b;", "  *b = hilf;", "}", "int main()", "{", "  int x = 10;", "  int y = 11;", "  tausche(&x, &y);", '  cout << x << " " << y;', "  return 0;", "}"]
+      ),
+    },
+    {
+      titel: "Zeiger auf struct: ->",
+      code: prog(
+        ["iostream"],
+        ["struct bruch", "{", "  int zaehler;", "  int nenner;", "};", "int main()", "{", "  bruch b2;", "  bruch *pb2;", "  pb2 = &b2;", "  (*pb2).zaehler = 10;", "  pb2->nenner = 20;", '  cout << pb2->zaehler << " / " << (*pb2).nenner;', "  return 0;", "}"]
+      ),
+    },
+    {
+      titel: "Zeiger durch ein Array",
+      code: mainProg(
+        ["iostream"],
+        `  int arr[4] = {5, 6, 7, 8};
+  int *p = arr;
+  p++;
+  cout << *p << " " << p[1] << " " << *(p + 2);`
+      ),
+    },
+    {
+      titel: "Fehler: Zeiger ohne Ziel",
+      code: mainProg(
+        ["iostream"],
+        `  int *p;
+  *p = 5;
+  cout << *p;`
+      ),
+    },
+    {
+      titel: "Fehler: Nullzeiger",
+      code: mainProg(
+        ["iostream"],
+        `  int zahl = 3;
+  int *p = NULL;
+  cout << zahl << " ";
+  cout << *p;`
+      ),
+    },
+  ],
+  tresor: [
+    {
+      titel: "Datei kopieren (Skript)",
+      dateien: { "input.txt": "Root\nPasswort" },
+      code: mainProg(
+        ["iostream", "fstream"],
+        `  string ausgelesen;
+  fstream dateistrom("input.txt", ios::in);
+  ofstream ausgabe("output.txt", ios::out | ios::trunc);
+  char c;
+  while (dateistrom.get(c))
+  {
+    ausgelesen.push_back(c);
+  }
+  ausgabe << ausgelesen;
+  cout << ausgelesen;
+  dateistrom.close();
+  ausgabe.close();`
+      ),
+    },
+    {
+      titel: "Zahlen aus einer Datei summieren",
+      dateien: { "werte.txt": "4 8 15\n16 23" },
+      code: mainProg(
+        ["iostream", "fstream"],
+        `  ifstream ein("werte.txt");
+  int zahl;
+  int summe = 0;
+  while (ein >> zahl)
+  {
+    summe = summe + zahl;
+  }
+  ein.close();
+  cout << summe;`
+      ),
+    },
+    {
+      titel: "Das Passwort in Zeile 3",
+      dateien: { "tresor.txt": "Laborserver\nroot\nKabelsalat42\nEnde" },
+      code: mainProg(
+        ["iostream", "fstream", "string"],
+        `  ifstream tresor("tresor.txt");
+  string zeile;
+  int nr = 0;
+  while (getline(tresor, zeile))
+  {
+    nr++;
+    if (nr == 3)
+      cout << zeile;
+  }
+  tresor.close();`
+      ),
+    },
+    {
+      titel: "Anhängen mit ios::app",
+      dateien: { "log.txt": "Start;" },
+      code: mainProg(
+        ["iostream", "fstream"],
+        `  fstream fs;
+  fs.open("log.txt", fstream::in | fstream::out | fstream::app);
+  for (int i = 1; i <= 3; i++)
+  {
+    fs << "Tür" << i << ";";
+  }
+  fs.close();
+  cout << "fertig";`
+      ),
+    },
+    {
+      titel: "Tippfehler im Dateinamen",
+      dateien: { "passwort.txt": "geheim" },
+      code: mainProg(
+        ["iostream", "fstream", "string"],
+        `  ifstream ein("pasword.txt");
+  string wort;
+  if (!ein.is_open())
+  {
+    cout << "Datei fehlt";
+  }
+  else
+  {
+    ein >> wort;
+    cout << wort;
+  }`
+      ),
+    },
+    {
+      titel: "Achtung: ofstream löscht den Inhalt",
+      dateien: { "notiz.txt": "Wichtige alte Notiz" },
+      code: mainProg(
+        ["iostream", "fstream"],
+        `  ofstream aus("notiz.txt");
+  aus << "neu";
+  aus.close();
+  cout << "gespeichert";`
+      ),
+    },
+  ],
+});
+
+Object.assign(PRUEF_MC, {
+  lager: [
+    ["Was macht v.push_back(7)?", ["Hängt 7 hinten an den vector an", "Setzt das erste Element auf 7", "Löscht das Element 7", "Fügt 7 vorne ein"], "push_back = hinten anhängen, der vector wird um 1 größer."],
+    ["v = {4, 5, 6}; Was ist v.size() nach v.pop_back()?", ["2", "3", "1", "6"], "pop_back entfernt das letzte Element."],
+    ["Was ist ein Vorteil von vector gegenüber einem Array?", ["Er kann nachträglich wachsen und schrumpfen", "Er braucht keinen Index", "Er ist immer schneller", "Er kann nur int speichern"], "Siehe Skript S. 40: vergrößerbar, einfügen an beliebiger Stelle, Größe abfragbar."],
+    ["Warum ist v[0] = 5; bei einem leeren vector falsch?", ["Der vector hat noch kein Element 0 – Zugriff außerhalb", "Weil man 5 nicht speichern darf", "Weil der Index bei 1 beginnt", "Das ist richtig"], "Erst mit push_back (oder vector<int> v(n)) entstehen Elemente."],
+    ["Welchen Datentyp liefert v.size()?", ["unsigned int (ohne Vorzeichen)", "double", "char", "bool"], "Deshalb ist v.size() − 1 bei einem leeren vector eine riesige Zahl."],
+  ],
+  funk: [
+    ["Wie viele Plätze braucht der Text „Funk“ in einem char-Array?", ["5", "4", "6", "3"], "4 Zeichen plus das Endezeichen '\\0'."],
+    ["Woran erkennt cout das Ende einer Zeichenkette in einem char-Array?", ["am Endezeichen '\\0'", "an der Arraygröße", "an einem Leerzeichen", "an einem Punkt"], "Ohne '\\0' liest cout einfach weiter im Speicher."],
+    ["char name[20]; Wie bekommt name den Text „Ute“?", ["strcpy(name, \"Ute\");", "name = \"Ute\";", "name[20] = \"Ute\";", "name == \"Ute\";"], "Einem Array kann man mit = nichts zuweisen."],
+    ["Was liefert strlen(\"Labor\")?", ["5", "6", "4", "20"], "strlen zählt die Zeichen ohne das '\\0'."],
+    ["char wort[] = \"Port\"; Was steht in wort[4]?", ["'\\0'", "'t'", "nichts – es gibt kein wort[4]", "ein zufälliger Wert"], "Das Array hat 5 Elemente: P, o, r, t und '\\0'."],
+  ],
+  archiv: [
+    ["Wie greift man auf die Komponente hausnummer der Strukturvariable a1 zu?", ["a1.hausnummer", "a1->hausnummer", "hausnummer.a1", "a1[hausnummer]"], "Der Punkt-Operator verbindet Variable und Komponente."],
+    ["Wo steht die Definition eines struct-Typs?", ["vor main, mit ; nach der }", "in main nach return", "in einer eigenen Datei, ohne ;", "hinter dem Programmende"], "Siehe Skript S. 51."],
+    ["punkt b = a; Danach wird b.x geändert. Was passiert mit a.x?", ["Nichts – b ist eine Kopie", "a.x ändert sich mit", "Das Programm stürzt ab", "a.x wird 0"], "Beim Zuweisen einer Struktur wird jede Komponente kopiert."],
+    ["Welche Datentypen dürfen in einem struct stehen?", ["beliebige, auch Arrays und andere structs", "nur int", "nur gleiche Datentypen", "nur char-Arrays"], "Genau das ist der Unterschied zum Array."],
+  ],
+  labyrinth: [
+    ["Was bedeutet &zahl?", ["die Adresse von zahl", "der Inhalt von zahl", "zahl wird verdoppelt", "eine Referenz auf 0"], "& liest man „Adresse von“."],
+    ["int *p = &x; Was bedeutet *p = 5;?", ["In die Adresse, auf die p zeigt (also x), wird 5 geschrieben", "p bekommt die Adresse 5", "p wird 5-mal erhöht", "x wird gelöscht"], "* liest man „Inhalt der Adresse, auf die … zeigt“."],
+    ["Warum stürzt *p = 5; ab, wenn p = NULL ist?", ["NULL zeigt auf keine gültige Speicherstelle", "5 ist zu groß", "NULL ist eine Zahl", "Das stürzt nicht ab"], "Vor dem Dereferenzieren muss ein Zeiger auf eine echte Variable zeigen."],
+    ["Was unterscheidet call by reference von call by value?", ["Die Funktion bekommt die Adresse und kann das Original ändern", "Die Funktion bekommt eine Kopie", "Es werden nur Texte übergeben", "Es gibt keinen Unterschied"], "Mit Zeiger (int *p) oder Referenz (int &z)."],
+    ["bruch *pb = &b; Was ist gleichwertig zu pb->nenner?", ["(*pb).nenner", "*pb.nenner", "pb.nenner", "&pb.nenner"], "Der Pfeil -> ist die Kurzform für Dereferenzieren und Punkt."],
+  ],
+  tresor: [
+    ["Was passiert beim Öffnen mit ofstream aus(\"x.txt\"); wenn x.txt schon Text enthält?", ["Der alte Inhalt wird gelöscht", "Der neue Text wird hinten angehängt", "Das Öffnen schlägt fehl", "Der Text bleibt, man kann nur lesen"], "ofstream öffnet standardmäßig mit ios::out | ios::trunc."],
+    ["Mit welchem Modus hängt man Text an das Ende einer Datei an?", ["ios::app", "ios::trunc", "ios::in", "ios::end"], "app = append = anhängen."],
+    ["Was liefert while (datei.get(c)) am Dateiende?", ["falsch – die Schleife endet", "wahr – die Schleife läuft weiter", "einen Fehler", "das letzte Zeichen noch einmal"], "Kann kein Zeichen mehr gelesen werden, ist der Strom nicht mehr in Ordnung."],
+    ["Warum sollte man eine Datei mit close() schließen?", ["Damit alles Gepufferte wirklich in die Datei geschrieben wird", "Damit die Datei gelöscht wird", "Damit der Computer schneller wird", "Das ist verboten"], "Siehe Skript: nicht geschriebener Inhalt im Puffer wird erst beim Schließen geschrieben."],
+    ["Welche Bibliothek braucht man für fstream?", ["<fstream>", "<iostream> reicht", "<cstring>", "<vector>"], "#include <fstream>"],
+  ],
+});
+
+Object.assign(GENERATOREN, {
+  lager: [
+    () => {
+      const w = verschiedene(5, 1, 40);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "vector"],
+          `  vector<int> v = {${w[0]}, ${w[1]}, ${w[2]}};
+  v.push_back(${w[3]});
+  v.push_back(${w[4]});
+  v.pop_back();
+  cout << v.size() << " " << v[v.size() - 1];`
+        ),
+        `Nach zwei push_back und einem pop_back hat der vector 4 Elemente, das letzte ist ${w[3]}.`
+      );
+    },
+    () => {
+      const w = verschiedene(4, 1, 9);
+      const k = zufall(0, 4);
+      const x = zufall(10, 99);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "vector"],
+          `  vector<int> v = {${w.join(", ")}};
+  v.insert(v.begin() + ${k}, ${x});
+  for (unsigned int i = 0; i < v.size(); i++)
+  {
+    cout << v[i] << " ";
+  }`
+        ),
+        `insert schiebt ${x} an Position ${k}, alle Elemente dahinter rücken nach hinten.`
+      );
+    },
+    () => {
+      const w = verschiedene(5, 1, 9);
+      const k = zufall(0, 4);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "vector"],
+          `  vector<int> v = {${w.join(", ")}};
+  v.erase(v.begin() + ${k});
+  for (int x : v)
+  {
+    cout << x << " ";
+  }`
+        ),
+        `erase löscht das Element an Position ${k} (also ${w[k]}), der Rest rückt nach vorn.`
+      );
+    },
+    () => {
+      const n = zufall(3, 6);
+      const w = zufall(2, 9);
+      const j = zufall(0, n - 1);
+      const x = zufall(10, 30);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "vector"],
+          `  vector<int> v(${n}, ${w});
+  v[${j}] = ${x};
+  int s = 0;
+  for (int e : v)
+  {
+    s = s + e;
+  }
+  cout << s;`
+        ),
+        `vector<int> v(${n}, ${w}) legt ${n} Elemente mit dem Wert ${w} an. Eins wird zu ${x}: ${(n - 1) * w} + ${x} = ${(n - 1) * w + x}.`
+      );
+    },
+    () => {
+      const n = zufall(3, 6);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "vector"],
+          `  vector<int> q;
+  for (int i = 1; i <= ${n}; i++)
+  {
+    q.push_back(i * i);
+  }
+  cout << q.size() << " " << q[${n - 2}];`
+        ),
+        `Die Quadratzahlen 1 bis ${n * n} werden angehängt. q[${n - 2}] ist das ${n - 1}. Element: ${(n - 1) * (n - 1)}.`
+      );
+    },
+  ],
+  funk: [
+    () => {
+      const w = waehle(WOERTER);
+      const k = zufall(0, w.length - 1);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "cstring"],
+          `  char wort[] = "${w}";
+  cout << wort[${k}] << " " << strlen(wort);`
+        ),
+        `wort[${k}] ist das ${k + 1}. Zeichen. strlen zählt ${w.length} Zeichen – das '\\0' zählt nicht.`
+      );
+    },
+    () => {
+      const w = waehle(WOERTER);
+      const c = waehle(w.split(""));
+      return ausgabeFrage(
+        mainProg(
+          ["iostream"],
+          `  char text[] = "${w}";
+  int n = 0;
+  int i = 0;
+  while (text[i] != '\\0')
+  {
+    if (text[i] == '${c}')
+      n++;
+    i++;
+  }
+  cout << n << " " << i;`
+        ),
+        `Die Schleife läuft bis zum '\\0'. ${c} kommt ${w.split(c).length - 1}-mal vor, i endet bei der Länge ${w.length}.`
+      );
+    },
+    () => {
+      const w = waehle(WOERTER);
+      const j = zufall(0, w.length - 1);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "cstring"],
+          `  char ziel[12];
+  strcpy(ziel, "${w}");
+  ziel[${j}] = 'x';
+  cout << ziel;`
+        ),
+        `strcpy kopiert „${w}“ samt '\\0', danach wird Element ${j} überschrieben.`
+      );
+    },
+    () => {
+      const w = waehle(WOERTER);
+      const k = zufall(2, Math.min(4, w.length - 1));
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "cstring"],
+          `  char kurz[10];
+  strcpy(kurz, "${w}");
+  kurz[${k}] = '\\0';
+  cout << kurz << " " << strlen(kurz);`
+        ),
+        `Das '\\0' an Position ${k} beendet die Zeichenkette vorzeitig: Es bleiben ${k} Zeichen.`
+      );
+    },
+    () => {
+      const w = waehle(WOERTER).toLowerCase();
+      const c = waehle(["x", "s", "a", "e"]);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "string"],
+          `  string s = "${w}";
+  s.push_back('${c}');
+  cout << s << " " << s.size();`
+        ),
+        `push_back hängt '${c}' an, der string wird ${w.length + 1} Zeichen lang.`
+      );
+    },
+  ],
+  archiv: [
+    () => {
+      const x = zufall(1, 9);
+      const y = zufall(1, 9);
+      const k = zufall(2, 9);
+      return ausgabeFrage(
+        prog(["iostream"], ["struct punkt", "{", "  int x;", "  int y;", "};", "int main()", "{", `  punkt a = {${x}, ${y}};`, "  punkt b = a;", `  b.x = b.x + ${k};`, '  cout << a.x << " " << b.x << " " << b.y;', "  return 0;", "}"]),
+        `b ist eine Kopie von a. Nur b.x ändert sich: ${x + k}.`
+      );
+    },
+    () => {
+      const m = zufall(2, 9);
+      const preis = waehle([1.5, 2.5, 0.5, 4.0, 1.25]);
+      const name = waehle(["Kabel", "Stecker", "Switch", "Platine"]);
+      return ausgabeFrage(
+        prog(["iostream"], ["struct artikel", "{", "  char name[10];", "  int menge;", "  double preis;", "};", "int main()", "{", `  artikel a = {"${name}", ${m}, ${Number.isInteger(preis) ? preis.toFixed(1) : preis}};`, "  a.menge = a.menge + 1;", '  cout << a.name << " " << a.menge * a.preis;', "  return 0;", "}"]),
+        `menge wird ${m + 1}, mal ${preis} ergibt ${(m + 1) * preis}.`
+      );
+    },
+    () => {
+      const w = verschiedene(3, 10, 99);
+      return ausgabeFrage(
+        prog(["iostream"], [
+          "struct messung",
+          "{",
+          "  int nr;",
+          "  int wert;",
+          "};",
+          "int main()",
+          "{",
+          `  messung m[3] = {{1, ${w[0]}}, {2, ${w[1]}}, {3, ${w[2]}}};`,
+          "  int best = 0;",
+          "  for (int i = 1; i < 3; i++)",
+          "  {",
+          "    if (m[i].wert > m[best].wert)",
+          "      best = i;",
+          "  }",
+          '  cout << m[best].nr << " " << m[best].wert;',
+          "  return 0;",
+          "}",
+        ]),
+        `Gesucht ist die Messung mit dem größten Wert: ${Math.max(...w)}.`
+      );
+    },
+    () => {
+      const x = zufall(1, 9);
+      const k = zufall(2, 9);
+      return ausgabeFrage(
+        prog(["iostream"], ["struct punkt", "{", "  int x;", "  int y;", "};", "void verschiebe(punkt p)", "{", `  p.x = p.x + ${k};`, '  cout << p.x << " ";', "}", "int main()", "{", `  punkt a = {${x}, 0};`, "  verschiebe(a);", "  cout << a.x;", "  return 0;", "}"]),
+        `verschiebe bekommt eine Kopie der Struktur (call by value). a.x bleibt ${x}.`
+      );
+    },
+    () => {
+      const h = zufall(7, 15);
+      const m = zufall(0, 40);
+      const k = zufall(5, 15);
+      return ausgabeFrage(
+        prog(["iostream"], ["struct zeit", "{", "  int h;", "  int m;", "};", "struct termin", "{", "  char titel[8];", "  zeit beginn;", "};", "int main()", "{", `  termin t = {"Labor", {${h}, ${m}}};`, `  t.beginn.m = t.beginn.m + ${k};`, '  cout << t.titel << " " << t.beginn.h << " " << t.beginn.m;', "  return 0;", "}"]),
+        `Verschachtelter Zugriff: t.beginn.m wird ${m} + ${k} = ${m + k}.`
+      );
+    },
+  ],
+  labyrinth: [
+    () => {
+      const a = zufall(1, 20);
+      const k = zufall(2, 9);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream"],
+          `  int a = ${a};
+  int *p = &a;
+  *p = *p + ${k};
+  cout << a;`
+        ),
+        `p zeigt auf a. *p = *p + ${k} ändert also a: ${a + k}.`
+      );
+    },
+    () => {
+      const [a, b] = verschiedene(2, 1, 20);
+      const k = zufall(30, 60);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream"],
+          `  int a = ${a};
+  int b = ${b};
+  int *p = &a;
+  p = &b;
+  *p = ${k};
+  cout << a << " " << b;`
+        ),
+        `p wird auf b umgestellt, bevor geschrieben wird. Nur b ändert sich.`
+      );
+    },
+    () => {
+      const [x, y] = verschiedene(2, 1, 30);
+      return ausgabeFrage(
+        prog(["iostream"], ["void tausche(int *a, int *b)", "{", "  int hilf = *a;", "  *a = *b;", "  *b = hilf;", "}", "int main()", "{", `  int x = ${x};`, `  int y = ${y};`, "  tausche(&x, &y);", '  cout << x << " " << y;', "  return 0;", "}"]),
+        "tausche bekommt die Adressen und vertauscht die Inhalte direkt in main."
+      );
+    },
+    () => {
+      const a = zufall(2, 9);
+      const m = zufall(2, 4);
+      return ausgabeFrage(
+        prog(["iostream"], ["void malZeiger(int *z)", "{", `  *z = *z * ${m};`, "}", "void malKopie(int w)", "{", `  w = w * ${m};`, "}", "int main()", "{", `  int a = ${a};`, "  malZeiger(&a);", "  malKopie(a);", "  cout << a;", "  return 0;", "}"]),
+        `Nur malZeiger ändert a (call by reference): ${a} · ${m} = ${a * m}. malKopie arbeitet mit einer Kopie.`
+      );
+    },
+    () => {
+      const a = zufall(1, 20);
+      const k = zufall(2, 9);
+      return ausgabeFrage(
+        prog(["iostream"], ["void addiere(int &r, int k)", "{", "  r = r + k;", "}", "int main()", "{", `  int a = ${a};`, `  addiere(a, ${k});`, `  addiere(a, ${k});`, "  cout << a;", "  return 0;", "}"]),
+        `r ist eine Referenz – ein anderer Name für a. Zweimal + ${k}: ${a + 2 * k}.`
+      );
+    },
+    () => {
+      const w = verschiedene(5, 1, 9);
+      const k = zufall(0, 3);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream"],
+          `  int arr[5] = {${w.join(", ")}};
+  int *p = arr;
+  p = p + ${k};
+  cout << *p << " " << p[1];`
+        ),
+        `p zeigt zuerst auf arr[0], nach + ${k} auf arr[${k}]. p[1] ist dann arr[${k + 1}].`
+      );
+    },
+    () => {
+      const s = zufall(50, 200);
+      const x = zufall(5, 40);
+      return ausgabeFrage(
+        prog(["iostream"], ["struct konto", "{", "  int nr;", "  int stand;", "};", "int main()", "{", `  konto k = {7, ${s}};`, "  konto *pk = &k;", `  pk->stand = pk->stand - ${x};`, '  cout << k.nr << " " << k.stand;', "  return 0;", "}"]),
+        `pk->stand ist dasselbe wie (*pk).stand – also k.stand: ${s} − ${x} = ${s - x}.`
+      );
+    },
+  ],
+  tresor: [
+    () => {
+      const w = Array.from({ length: zufall(3, 5) }, () => zufall(1, 30));
+      const inhalt = w.join(" ");
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "fstream"],
+          `  ifstream ein("werte.txt");
+  int zahl;
+  int summe = 0;
+  while (ein >> zahl)
+  {
+    summe = summe + zahl;
+  }
+  cout << summe;`
+        ),
+        `werte.txt enthält „${inhalt}“. >> liest Zahl für Zahl, bis nichts mehr kommt: Summe ${w.reduce((a, b) => a + b, 0)}.`,
+        { "werte.txt": inhalt }
+      );
+    },
+    () => {
+      const a = waehle(WOERTER);
+      const b = waehle(WOERTER).slice(0, zufall(2, 4));
+      const inhalt = `${a}\n${b}`;
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "fstream"],
+          `  ifstream ein("text.txt");
+  char c;
+  int n = 0;
+  while (ein.get(c))
+  {
+    n++;
+  }
+  cout << n;`
+        ),
+        `text.txt enthält „${a}“, einen Zeilenumbruch und „${b}“. get liest jedes Zeichen – auch den Zeilenumbruch: ${a.length} + 1 + ${b.length} = ${a.length + 1 + b.length}.`,
+        { "text.txt": inhalt }
+      );
+    },
+    () => {
+      const zeilen = [waehle(WOERTER), waehle(WOERTER), waehle(WOERTER), waehle(WOERTER)];
+      const k = zufall(1, 4);
+      return ausgabeFrage(
+        mainProg(
+          ["iostream", "fstream", "string"],
+          `  ifstream ein("liste.txt");
+  string zeile;
+  int nr = 0;
+  while (getline(ein, zeile))
+  {
+    nr++;
+    if (nr == ${k})
+      cout << zeile << " ";
+  }
+  cout << nr;`
+        ),
+        `getline liest Zeile für Zeile. Zeile ${k} ist „${zeilen[k - 1]}“, insgesamt sind es 4 Zeilen.`,
+        { "liste.txt": zeilen.join("\n") }
+      );
+    },
+    () => {
+      const n = zufall(3, 5);
+      const k = zufall(2, 5);
+      return dateiFrage(
+        mainProg(
+          ["iostream", "fstream"],
+          `  ofstream aus("aus.txt");
+  for (int i = 1; i <= ${n}; i++)
+  {
+    aus << i * ${k} << " ";
+  }
+  aus.close();`
+        ),
+        "aus.txt",
+        `In die Datei werden ${n} Zahlen geschrieben: ${Array.from({ length: n }, (_, i) => (i + 1) * k).join(" ")}.`,
+        {}
+      );
+    },
+    () => {
+      const alt = waehle(["A;", "Start;", "Log;"]);
+      const n = zufall(2, 3);
+      return dateiFrage(
+        mainProg(
+          ["iostream", "fstream"],
+          `  fstream fs("log.txt", ios::out | ios::app);
+  for (int i = 1; i <= ${n}; i++)
+  {
+    fs << i << ";";
+  }
+  fs.close();`
+        ),
+        "log.txt",
+        `Mit ios::app bleibt „${alt}“ stehen, der neue Text wird hinten angehängt.`,
+        { "log.txt": alt }
+      );
+    },
+    () => {
+      const alt = waehle(["alte Notiz", "Wichtig", "Passwort123"]);
+      const neu = waehle(["neu", "leer", "x"]);
+      return dateiFrage(
+        mainProg(
+          ["iostream", "fstream"],
+          `  ofstream aus("notiz.txt");
+  aus << "${neu}";
+  aus.close();`
+        ),
+        "notiz.txt",
+        `ofstream öffnet mit ios::out | ios::trunc: „${alt}“ wird gelöscht, nur „${neu}“ steht danach drin.`,
+        { "notiz.txt": alt }
+      );
+    },
+  ],
+});
 
 function neuePruefung(stufe) {
   const id = STUFEN[stufe].id;

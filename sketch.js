@@ -122,7 +122,7 @@ let rueckmeldung = null; // {ok, text}
 let antwortIdx = -1;
 let aufloesung = false;
 let rueckT0 = 0;
-let freigaben = [false, false, false, false, false, false];
+let freigaben = STUFEN.map(() => false);
 let stempel = null;
 let mcRechtecke = [];
 let fehlerMeldung = null;
@@ -262,7 +262,7 @@ function aktRaetsel() {
 }
 
 function neueSimulation() {
-  sim = fuehreAus(aktRaetsel().code);
+  sim = fuehreAus(aktRaetsel().code, { dateien: aktRaetsel().dateien });
   schrittIdx = 0;
   animT0 = millis();
   laufAuto = false;
@@ -328,7 +328,7 @@ function naechsteAufgabe() {
   antwortIdx = -1;
   aufloesung = false;
   laufAuto = false;
-  sim = aufgabe.code ? fuehreAus(aufgabe.code) : null;
+  sim = aufgabe.code ? fuehreAus(aufgabe.code, { dateien: aufgabe.dateien || undefined }) : null;
   schrittIdx = 0;
   animT0 = millis();
   if (typeof leereEingaben === "function") {
@@ -380,7 +380,7 @@ function zeigeAufloesung() {
     return;
   }
   aufloesung = true;
-  sim = fuehreAus(aufgabe.code);
+  sim = fuehreAus(aufgabe.code, { dateien: aufgabe.dateien || undefined });
   schrittIdx = 0;
   laufAuto = true;
   animT0 = millis() - 100000;
@@ -388,11 +388,17 @@ function zeigeAufloesung() {
 
 function ladeFreigaben() {
   try {
-    const roh = window.localStorage.getItem("tresorknacker-freigaben");
+    // Prüfsiegel je Raum-id (damit neue Räume die alten Siegel nicht verschieben)
+    const roh = window.localStorage.getItem("tresorknacker-siegel");
     if (roh) {
-      const liste = JSON.parse(roh);
-      if (Array.isArray(liste) && liste.length === 6) {
-        freigaben = liste.map((x) => x === true);
+      const obj = JSON.parse(roh);
+      freigaben = STUFEN.map((st) => obj[st.id] === true);
+    } else {
+      const alt = window.localStorage.getItem("tresorknacker-freigaben");
+      if (alt) {
+        const ids = ["eingang", "bibliothek", "uhren", "schliessfach", "spiegel", "kessel"];
+        const liste = JSON.parse(alt);
+        freigaben = STUFEN.map((st) => Array.isArray(liste) && liste[ids.indexOf(st.id)] === true);
       }
     }
   } catch (e) {
@@ -402,14 +408,18 @@ function ladeFreigaben() {
 
 function speichereFreigaben() {
   try {
-    window.localStorage.setItem("tresorknacker-freigaben", JSON.stringify(freigaben));
+    const obj = {};
+    STUFEN.forEach((st, i) => {
+      obj[st.id] = freigaben[i];
+    });
+    window.localStorage.setItem("tresorknacker-siegel", JSON.stringify(obj));
   } catch (e) {
     // kein Speicher verfügbar
   }
 }
 
 function freigabenZuruecksetzen() {
-  freigaben = [false, false, false, false, false, false];
+  freigaben = STUFEN.map(() => false);
   speichereFreigaben();
 }
 
@@ -677,7 +687,8 @@ function zeichneCode() {
     return;
   }
   const lh = Math.min(22, (c.h - 20) / zeilen.length);
-  const groesse = Math.min(14, lh * 0.68);
+  const laengste = Math.max(...zeilen.map((z) => z.length));
+  const groesse = Math.min(14, lh * 0.68, (c.w - 64) / (laengste * 0.6));
   const s = aktSchritt();
   const v = vorigerSchritt();
   const ablauf = zeigtAblauf() && s;
@@ -782,6 +793,49 @@ function zeichneRaumSymbol(id, x, y) {
     stroke(255);
     line(12, 10, 16, 6);
     line(12, 16, 20, 7);
+  } else if (id === "lager") {
+    line(2, 30, 38, 30);
+    circle(6, 34, 6);
+    circle(34, 34, 6);
+    fill(255);
+    rect(6, 16, 12, 12, 1);
+    rect(20, 16, 12, 12, 1);
+    noStroke();
+    fill(...FARBE.akzent);
+    rect(23, 6, 6, 8, 1);
+  } else if (id === "funk") {
+    line(19, 12, 19, 34);
+    line(12, 34, 26, 34);
+    noFill();
+    arc(19, 12, 14, 14, PI + 0.6, TWO_PI - 0.6);
+    arc(19, 12, 26, 26, PI + 0.6, TWO_PI - 0.6);
+    noStroke();
+    fill(...FARBE.akzent);
+    circle(19, 12, 5);
+  } else if (id === "archiv") {
+    fill(255);
+    rect(4, 14, 30, 20, 2);
+    rect(8, 8, 22, 8, 1);
+    line(14, 24, 24, 24);
+    noStroke();
+    fill(...FARBE.akzent);
+    circle(19, 24, 4);
+  } else if (id === "labyrinth") {
+    rect(3, 3, 32, 32, 2);
+    line(11, 3, 11, 25);
+    line(19, 11, 19, 35);
+    line(27, 3, 27, 25);
+    noStroke();
+    fill(...FARBE.akzent);
+    circle(31, 31, 5);
+  } else if (id === "tresor") {
+    fill(255);
+    rect(3, 4, 32, 30, 3);
+    circle(19, 19, 14);
+    line(19, 19, 23, 15);
+    noStroke();
+    fill(...FARBE.akzent);
+    circle(19, 19, 4);
   } else {
     fill(255);
     arc(19, 22, 34, 34, PI, TWO_PI, CHORD);
@@ -900,7 +954,7 @@ function zeichneTuer() {
     textSize(12);
     textAlign(CENTER, CENTER);
     fill(150, 110, 30);
-    text(stufe < 5 ? "weiter →" : "Tresor ✓", tx + tw / 2 + 12, ty + th / 2);
+    text(stufe < STUFEN.length - 1 ? "weiter →" : "Tresor ✓", tx + tw / 2 + 12, ty + th / 2);
     textStyle(NORMAL);
   }
   // Türblatt (klappt nach links auf)
@@ -920,18 +974,98 @@ function zeichneTuer() {
 }
 
 // ---------------------------------------------------------------------------
-// Speicher: Variablen nach Gültigkeitsbereich
+// Speicher: Variablen nach Gültigkeitsbereich, Dateien, Zeiger-Pfeile
 // ---------------------------------------------------------------------------
 function frameFarbe(art) {
-  return art === "global" ? FARBE.senf : art === "main" ? FARBE.blau : FARBE.violett;
+  return art === "global" ? FARBE.senf : art === "main" ? FARBE.blau : art === "datei" ? FARBE.gruen : FARBE.violett;
+}
+
+const CHIP_W = 84;
+const CHIP_H = 42;
+
+// Wie wird eine Variable dargestellt?
+function darstellung(v) {
+  const t = v.z.t;
+  if (v.alias) {
+    return "chip";
+  }
+  if ((t.k === "array" || t.k === "vector") && t.elem.k === "basis") {
+    return "reihe";
+  }
+  if (t.k === "array" || t.k === "vector" || t.k === "struct") {
+    return "karte";
+  }
+  if (t.k === "string" && v.z.w.length > 8) {
+    return "karte";
+  }
+  return "chip";
+}
+
+function kartenZeilen(z) {
+  const t = z.t;
+  if (t.k === "struct") {
+    return t.felder.map((f) => ({ name: f.name, z: z.w[f.name] }));
+  }
+  if (t.k === "array" || t.k === "vector") {
+    return z.w.map((e, i) => ({ name: `[${i}]`, z: e }));
+  }
+  return [{ name: "", z }];
+}
+
+function varHoehe(v, breite) {
+  const d = darstellung(v);
+  if (d === "reihe") {
+    const n = Math.max(1, v.z.w.length);
+    const zw = Math.max(15, Math.min(44, (breite - 4) / n));
+    const proZeile = Math.max(1, Math.floor((breite - 4) / zw));
+    return 18 + Math.ceil(n / proZeile) * 44;
+  }
+  if (d === "karte") {
+    return 22 + kartenZeilen(v.z).length * 15 + 6;
+  }
+  return CHIP_H;
 }
 
 function frameHoehe(f, breite) {
-  const skalare = f.vars.filter((v) => !v.arr);
-  const arrays = f.vars.filter((v) => v.arr);
-  const proZeile = Math.max(1, Math.floor((breite - 12) / 90));
-  const zeilen = Math.ceil(skalare.length / proZeile);
-  return 24 + zeilen * 48 + arrays.length * 60 + (f.vars.length ? 4 : 22);
+  let h = 24;
+  const chips = f.vars.filter((v) => darstellung(v) === "chip");
+  const proZeile = Math.max(1, Math.floor((breite - 12) / (CHIP_W + 6)));
+  h += Math.ceil(chips.length / proZeile) * (CHIP_H + 6);
+  for (const v of f.vars.filter((x) => darstellung(x) !== "chip")) {
+    h += varHoehe(v, breite - 16) + 6;
+  }
+  return h + (f.vars.length ? 2 : 22);
+}
+
+function dateiZeilen(d, breite) {
+  textFont(MONO);
+  textSize(10.5);
+  const zeilen = [];
+  let akt = "";
+  let start = 0;
+  const txt = d.inhalt;
+  for (let i = 0; i <= txt.length; i++) {
+    const c = i < txt.length ? txt[i] : null;
+    if (c === null || c === "\n" || textWidth(akt + (c || "")) > breite) {
+      zeilen.push({ t: akt, start, nl: c === "\n" });
+      if (c === "\n") {
+        akt = "";
+        start = i + 1;
+        continue;
+      }
+      if (c === null) {
+        break;
+      }
+      akt = "";
+      start = i;
+    }
+    akt += c;
+  }
+  return zeilen.slice(0, 6);
+}
+
+function dateiHoehe(d, breite) {
+  return 24 + Math.max(1, dateiZeilen(d, breite - 20).length) * 14 + 8;
 }
 
 function zeichneSpeicher() {
@@ -942,15 +1076,23 @@ function zeichneSpeicher() {
   textStyle(BOLD);
   textSize(12);
   textAlign(LEFT, TOP);
-  text("Speicher – Variablen nach Gültigkeitsbereich", sp.x + 2, sp.y);
-  textStyle(NORMAL);
   const s = aktSchritt();
+  const dateien = s && zeigtAblauf() ? s.dateien || [] : [];
+  text(dateien.length ? "Speicher und Dateien" : "Speicher – Variablen nach Gültigkeitsbereich", sp.x + 2, sp.y);
+  textStyle(NORMAL);
   if (!zeigtAblauf() || !s) {
-    absatz(modus === "pruefung" ? "Erst selbst durchdenken: Welche Werte stehen in den Variablen? Nach der Antwort zeigt „Ablauf zeigen“ den Speicher Schritt für Schritt." : "", sp.x + 2, sp.y + 26, sp.w - 4, 12.5, FARBE.blass);
+    let hinweis = "";
+    if (modus === "pruefung") {
+      hinweis = "Erst selbst durchdenken: Welche Werte stehen in den Variablen? Nach der Antwort zeigt „Ablauf zeigen“ den Speicher Schritt für Schritt.";
+      if (aufgabe && aufgabe.dateien && Object.keys(aufgabe.dateien).length) {
+        hinweis += " Vorhandene Dateien: " + Object.keys(aufgabe.dateien).map((n) => `${n} = „${aufgabe.dateien[n].replace(/\n/g, "⏎")}“`).join(", ");
+      }
+    }
+    absatz(hinweis, sp.x + 2, sp.y + 26, sp.w - 4, 12.5, FARBE.blass);
     return;
   }
   const frames = s.speicher;
-  if (!frames.length) {
+  if (!frames.length && !dateien.length) {
     absatz("Noch keine Variablen.", sp.x + 2, sp.y + 26, sp.w - 4, 12.5, FARBE.blass);
     return;
   }
@@ -958,24 +1100,27 @@ function zeichneSpeicher() {
   for (const f of frames) {
     gesamt += frameHoehe(f, sp.w) + 8;
   }
-  const verfuegbar = sp.h - 22;
-  const sk = Math.min(1, verfuegbar / gesamt);
+  for (const d of dateien) {
+    gesamt += dateiHoehe(d, sp.w) + 8;
+  }
+  const sk = Math.min(1, (sp.h - 22) / gesamt);
+  const zeigeAdr = frames.some((f) => f.vars.some((v) => v.z.t.k === "zeiger" || v.alias));
+  const pos = new Map();
+  const zeiger = [];
   push();
   translate(sp.x, sp.y + 22);
   scale(sk);
   let y = 0;
   const weg = s.weg || [];
   frames.forEach((f, fi) => {
-    const h = frameHoehe(f, sp.w / sk > sp.w ? sp.w : sp.w);
+    const h = frameHoehe(f, sp.w);
     const farbe = frameFarbe(f.art);
     const verschwindet = s.art === "return" && fi === frames.length - 1 && f.art === "funktion";
-    // Rahmen
     stroke(...farbe);
     strokeWeight(f.art === "funktion" ? 2.5 : 1.5);
     fill(...hell(farbe, 0.93));
     rect(0, y, sp.w, h, 8);
     if (f.art === "funktion") {
-      // Spiegelrahmen
       stroke(255, 255, 255, 180);
       strokeWeight(1);
       noFill();
@@ -1003,45 +1148,85 @@ function zeichneSpeicher() {
       textAlign(LEFT, TOP);
       text("(keine Variablen)", 10, yy);
     }
-    // einfache Variablen
-    const skalare = f.vars.filter((v) => !v.arr);
-    const proZeile = Math.max(1, Math.floor((sp.w - 12) / 90));
-    skalare.forEach((v, i) => {
-      const cx = 8 + (i % proZeile) * 90;
-      const cy = yy + Math.floor(i / proZeile) * 48;
-      zeichneVariable(v, cx, cy, s, verschwindet || weg.indexOf(v.name) >= 0);
+    const chips = f.vars.filter((v) => darstellung(v) === "chip");
+    const proZeile = Math.max(1, Math.floor((sp.w - 12) / (CHIP_W + 6)));
+    chips.forEach((v, i) => {
+      const cx = 8 + (i % proZeile) * (CHIP_W + 6);
+      const cy = yy + Math.floor(i / proZeile) * (CHIP_H + 6);
+      zeichneVariable(v, cx, cy, s, verschwindet || weg.indexOf(v.name) >= 0, zeigeAdr, pos, zeiger);
     });
-    yy += Math.ceil(skalare.length / proZeile) * 48;
-    // Arrays
-    for (const v of f.vars.filter((x) => x.arr)) {
-      zeichneArray(v, 8, yy, sp.w - 16, s, verschwindet || weg.indexOf(v.name) >= 0);
-      yy += 60;
+    yy += Math.ceil(chips.length / proZeile) * (CHIP_H + 6);
+    for (const v of f.vars.filter((x) => darstellung(x) !== "chip")) {
+      const vh = varHoehe(v, sp.w - 16);
+      if (darstellung(v) === "reihe") {
+        zeichneReihe(v, 8, yy, sp.w - 16, s, verschwindet || weg.indexOf(v.name) >= 0, pos);
+      } else {
+        zeichneKarte(v, 8, yy, sp.w - 16, vh, s, verschwindet || weg.indexOf(v.name) >= 0, pos, zeiger);
+      }
+      yy += vh + 6;
     }
     y += h + 8;
   });
+  for (const d of dateien) {
+    y += zeichneDatei(d, 0, y, sp.w, s) + 8;
+  }
+  // Zeiger als Pfeile
+  for (const z of zeiger) {
+    const ziel = pos.get(z.ziel);
+    if (!ziel) {
+      continue;
+    }
+    const x1 = z.x;
+    const y1 = z.y;
+    const x2 = ziel.x + ziel.w / 2;
+    const y2 = ziel.y + (ziel.y > y1 ? 0 : ziel.h);
+    noFill();
+    stroke(...FARBE.akzent, 200);
+    strokeWeight(2);
+    const mx = Math.max(x1, x2) + 30;
+    bezier(x1, y1, mx, y1, mx, y2 + (ziel.y > y1 ? -20 : 20), x2, y2);
+    noStroke();
+    fill(...FARBE.akzent);
+    const dir = ziel.y > y1 ? -1 : 1;
+    triangle(x2, y2, x2 - 5, y2 + dir * 9, x2 + 5, y2 + dir * 9);
+  }
   pop();
 }
 
-function wertGross(v, w) {
-  if (w === undefined) {
-    return "?";
+function wertGross(z) {
+  const t = z.t;
+  if (t.k === "basis") {
+    if (z.w === undefined) {
+      return "?";
+    }
+    if (t.name === "char") {
+      return z.w === 0 ? "'\\0'" : z.w === 10 ? "'\\n'" : z.w >= 32 && z.w <= 126 ? `'${String.fromCharCode(z.w)}'` : String(z.w);
+    }
+    if (t.name === "double") {
+      return fmtDouble(z.w);
+    }
+    return String(z.w);
   }
-  if (v.typ === "char") {
-    return w >= 32 && w <= 126 ? `'${String.fromCharCode(w)}'` : String(w);
+  if (t.k === "string") {
+    return `"${z.w.replace(/\n/g, "⏎")}"`;
   }
-  if (v.typ === "double") {
-    return fmtDouble(w);
+  if (t.k === "zeiger") {
+    return z.w.ziel !== undefined ? `→ ${z.w.name}` : z.w.nul ? "NULL" : "?";
   }
-  return String(w);
+  if (t.k === "stream") {
+    return z.w.datei ? z.w.datei : "–";
+  }
+  return kurzText(z);
 }
 
-function zeichneVariable(v, x, y, s, verschwindet) {
-  const neu = s.geaendert.indexOf(v.key) >= 0;
-  const w = 84;
-  const h = 42;
-  stroke(...(neu ? FARBE.akzent : FARBE.linie));
+function zeichneVariable(v, x, y, s, verschwindet, zeigeAdr, pos, zeiger) {
+  const z = v.z;
+  const neu = s.geaendert.indexOf(v.key) >= 0 || (v.alias && false);
+  const w = CHIP_W;
+  const h = CHIP_H;
+  stroke(...(neu ? FARBE.akzent : v.alias ? FARBE.violett : FARBE.linie));
   strokeWeight(neu ? 2 : 1);
-  if (v.tiefe > 0) {
+  if (v.tiefe > 0 || v.alias) {
     drawingContext.setLineDash([4, 3]);
   }
   fill(...(neu ? hell(FARBE.akzent, 0.9) : FARBE.flaeche));
@@ -1054,29 +1239,44 @@ function zeichneVariable(v, x, y, s, verschwindet) {
   textSize(10.5);
   textAlign(LEFT, TOP);
   let nm = v.name;
-  while (textWidth(nm) > 52 && nm.length > 2) {
+  while (textWidth(nm) > 44 && nm.length > 2) {
     nm = nm.slice(0, -1);
   }
-  text(nm, x + 6, y + 4);
+  text(nm, x + 5, y + 3);
   textAlign(RIGHT, TOP);
   fill(125, 122, 114, alpha);
-  textSize(9);
-  text(v.typ, x + w - 5, y + 5);
-  fill(...(v.wert === undefined ? FARBE.blass : FARBE.text), alpha);
-  textStyle(BOLD);
-  textSize(15);
-  textAlign(LEFT, BOTTOM);
-  let wt = wertGross(v, v.wert);
-  while (textWidth(wt) > w - 10 && wt.length > 2) {
-    textSize(textSize() - 1);
+  textSize(8.5);
+  let tn = v.alias ? "Referenz" : typName(z.t);
+  while (textWidth(tn) > w - textWidth(nm) - 14 && tn.length > 3) {
+    tn = tn.slice(0, -1);
   }
-  text(wt, x + 6, y + h - 4);
+  text(tn, x + w - 4, y + 4);
+  let wt = v.alias ? `→ ${v.alias}` : wertGross(z);
+  fill(...((z.t.k === "basis" && z.w === undefined) || (z.t.k === "zeiger" && z.w.wild) ? FARBE.blass : z.t.k === "zeiger" || v.alias ? FARBE.akzent : FARBE.text), alpha);
+  textStyle(BOLD);
+  let gr = 15;
+  textSize(gr);
+  while (textWidth(wt) > w - 10 && gr > 9) {
+    gr -= 1;
+    textSize(gr);
+  }
+  while (textWidth(wt) > w - 10 && wt.length > 2) {
+    wt = wt.slice(0, -2) + "…";
+  }
+  textAlign(LEFT, BOTTOM);
+  text(wt, x + 5, y + h - (zeigeAdr ? 11 : 4));
   textStyle(NORMAL);
-  if (v.typ === "char" && v.wert !== undefined && v.wert >= 32 && v.wert <= 126) {
+  if (z.t.k === "basis" && z.t.name === "char" && z.w !== undefined && z.w >= 32 && z.w <= 126) {
     fill(125, 122, 114, alpha);
-    textSize(9.5);
+    textSize(9);
     textAlign(RIGHT, BOTTOM);
-    text(v.wert, x + w - 5, y + h - 5);
+    text(z.w, x + w - 4, y + h - (zeigeAdr ? 11 : 4));
+  }
+  if (zeigeAdr && !v.alias && z.adr) {
+    fill(150, 146, 138, alpha);
+    textSize(8);
+    textAlign(LEFT, BOTTOM);
+    text(hexAdr(z.adr), x + 5, y + h - 2);
   }
   if (verschwindet) {
     stroke(...FARBE.akzent);
@@ -1084,37 +1284,185 @@ function zeichneVariable(v, x, y, s, verschwindet) {
     line(x + 4, y + h / 2, x + w - 4, y + h / 2);
     noStroke();
   }
+  if (!v.alias) {
+    pos.set(z.id, { x, y, w, h });
+  }
+  if (z.t.k === "zeiger" && z.w.ziel !== undefined) {
+    zeiger.push({ x: x + w, y: y + h / 2, ziel: z.w.ziel });
+  } else if (v.alias) {
+    zeiger.push({ x: x + w, y: y + h / 2, ziel: z.id });
+  }
 }
 
-function zeichneArray(v, x, y, breite, s, verschwindet) {
+function zeichneReihe(v, x, y, breite, s, verschwindet, pos) {
+  const z = v.z;
   noStroke();
   fill(...FARBE.grau);
   textFont(MONO);
   textSize(10.5);
   textAlign(LEFT, TOP);
-  text(`${v.typ} ${v.name}[${v.werte.length}]`, x, y);
-  const n = v.werte.length;
-  const zw = Math.min(44, (breite - 4) / n);
-  v.werte.forEach((w, i) => {
+  let kopf = `${typName(z.t)} ${v.name}`;
+  if (z.t.k === "array") {
+    kopf = `${typName(z.t.elem)} ${v.name}[${z.w.length}]`;
+  } else {
+    kopf += `  ·  size() = ${z.w.length}`;
+  }
+  if (z.t.k === "array" && z.t.elem.name === "char") {
+    const c = cStringText(z);
+    kopf += `  ·  Text: ${c}`;
+  }
+  text(kopf, x, y);
+  const neuGanz = s.geaendert.indexOf(v.key) >= 0;
+  const n = z.w.length;
+  if (!n) {
+    fill(...FARBE.blass);
+    textSize(10.5);
+    text("(leer)", x, y + 22);
+    return;
+  }
+  const zw = Math.max(15, Math.min(44, (breite - 4) / n));
+  const proZeile = Math.max(1, Math.floor((breite - 4) / zw));
+  z.w.forEach((e, i) => {
     const key = `${v.key}[${i}]`;
-    const neu = s.geaendert.indexOf(key) >= 0;
-    const cx = x + i * zw;
+    const neu = s.geaendert.indexOf(key) >= 0 || (neuGanz && z.t.k === "vector");
+    const cx = x + (i % proZeile) * zw;
+    const cy = y + 15 + Math.floor(i / proZeile) * 44;
+    const nullz = z.t.elem.name === "char" && e.w === 0;
     stroke(...(neu ? FARBE.akzent : [150, 146, 138]));
     strokeWeight(neu ? 2 : 1);
-    fill(...(neu ? hell(FARBE.akzent, 0.88) : [236, 232, 224]));
-    rect(cx, y + 15, zw - 3, 28, 3);
+    fill(...(neu ? hell(FARBE.akzent, 0.88) : nullz ? [226, 232, 240] : [236, 232, 224]));
+    rect(cx, cy, zw - 3, 28, 3);
     noStroke();
-    fill(...(w === undefined ? FARBE.blass : FARBE.text), verschwindet ? 110 : 255);
+    fill(...(e.w === undefined ? FARBE.blass : nullz ? FARBE.blau : FARBE.text), verschwindet ? 110 : 255);
     textStyle(BOLD);
-    textSize(Math.min(13, zw * 0.36));
+    let wt = wertGross(e);
+    if (z.t.elem.name === "char" && e.w !== undefined && e.w !== 0 && e.w >= 32 && e.w <= 126) {
+      wt = String.fromCharCode(e.w);
+    }
+    let gr = Math.min(13, zw * 0.42);
+    textSize(gr);
+    while (textWidth(wt) > zw - 5 && gr > 7) {
+      gr -= 1;
+      textSize(gr);
+    }
     textAlign(CENTER, CENTER);
-    text(wertGross(v, w), cx + (zw - 3) / 2, y + 29);
+    text(wt, cx + (zw - 3) / 2, cy + 14);
     textStyle(NORMAL);
     fill(...FARBE.blass);
-    textSize(9);
+    textSize(Math.min(9, zw * 0.5));
     textAlign(CENTER, TOP);
-    text(i, cx + (zw - 3) / 2, y + 45);
+    text(i, cx + (zw - 3) / 2, cy + 30);
+    pos.set(e.id, { x: cx, y: cy, w: zw - 3, h: 28 });
   });
+  pos.set(z.id, { x, y: y + 15, w: zw - 3, h: 28 });
+}
+
+function cStringText(z) {
+  let t = "";
+  for (const e of z.w) {
+    if (e.w === 0) {
+      return `"${t}"`;
+    }
+    t += e.w === undefined ? "?" : String.fromCharCode(e.w);
+  }
+  return `"${t}…" (kein \\0!)`;
+}
+
+function zeichneKarte(v, x, y, breite, h, s, verschwindet, pos, zeiger) {
+  const z = v.z;
+  const neu = s.geaendert.indexOf(v.key) >= 0;
+  stroke(...(neu ? FARBE.akzent : FARBE.linie));
+  strokeWeight(neu ? 2 : 1);
+  if (v.tiefe > 0) {
+    drawingContext.setLineDash([4, 3]);
+  }
+  fill(...(neu ? hell(FARBE.akzent, 0.92) : FARBE.flaeche));
+  rect(x, y, breite, h, 6);
+  drawingContext.setLineDash([]);
+  noStroke();
+  fill(...FARBE.grau);
+  textFont(MONO);
+  textSize(10.5);
+  textAlign(LEFT, TOP);
+  textStyle(BOLD);
+  text(`${typName(z.t)} ${v.name}${z.t.k === "vector" ? `  ·  size() = ${z.w.length}` : ""}`, x + 6, y + 4);
+  textStyle(NORMAL);
+  pos.set(z.id, { x, y, w: breite, h });
+  let yy = y + 22;
+  const alpha = verschwindet ? 110 : 255;
+  for (const zl of kartenZeilen(z)) {
+    fill(125, 122, 114, alpha);
+    textSize(10.5);
+    textAlign(LEFT, TOP);
+    text(zl.name, x + 10, yy);
+    const nb = Math.max(56, textWidth(zl.name) + 14);
+    fill(...(zl.z.t.k === "zeiger" ? FARBE.akzent : FARBE.text), alpha);
+    let wt = zl.z.t.k === "basis" || zl.z.t.k === "zeiger" || zl.z.t.k === "string" ? wertGross(zl.z) : kurzText(zl.z);
+    while (textWidth(wt) > breite - nb - 14 && wt.length > 3) {
+      wt = wt.slice(0, -2) + "…";
+    }
+    text(wt, x + nb, yy);
+    pos.set(zl.z.id, { x: x + nb, y: yy - 1, w: Math.min(breite - nb - 10, textWidth(wt) + 4), h: 14 });
+    if (zl.z.t.k === "zeiger" && zl.z.w.ziel !== undefined) {
+      zeiger.push({ x: x + nb + textWidth(wt) + 4, y: yy + 6, ziel: zl.z.w.ziel });
+    }
+    yy += 15;
+  }
+}
+
+function zeichneDatei(d, x, y, breite, s) {
+  const h = dateiHoehe(d, breite);
+  const farbe = FARBE.gruen;
+  const neu = s.flags && s.flags.datei === d.name;
+  stroke(...(neu ? FARBE.akzent : farbe));
+  strokeWeight(neu ? 2.5 : 1.5);
+  fill(...hell(farbe, 0.94));
+  rect(x, y, breite, h, 8);
+  noStroke();
+  fill(...farbe);
+  rect(x, y, breite, 20, 8, 8, 0, 0);
+  fill(255);
+  textFont(MONO);
+  textStyle(BOLD);
+  textSize(11.5);
+  textAlign(LEFT, CENTER);
+  text(`Datei ${d.name}`, x + 10, y + 10);
+  textStyle(NORMAL);
+  textAlign(RIGHT, CENTER);
+  const status = [];
+  if (d.lese.length) {
+    status.push("wird gelesen");
+  }
+  if (d.schreib) {
+    status.push("wird beschrieben");
+  }
+  text(status.join(" · ") || (d.neu ? "neu" : ""), x + breite - 10, y + 10);
+  const zeilen = dateiZeilen(d, breite - 20);
+  textFont(MONO);
+  textSize(10.5);
+  textAlign(LEFT, TOP);
+  let yy = y + 26;
+  if (!d.inhalt.length) {
+    fill(...FARBE.blass);
+    text("(leer)", x + 10, yy);
+  }
+  for (const z of zeilen) {
+    let xx = x + 10;
+    for (let i = 0; i <= z.t.length; i++) {
+      const p = z.start + i;
+      const cursor = d.lese.indexOf(p) >= 0;
+      const c = i < z.t.length ? z.t[i] : z.nl ? "⏎" : "";
+      if (cursor) {
+        fill(...hell(FARBE.akzent, 0.75));
+        rect(xx - 1, yy - 1, Math.max(6, textWidth(c || " ")) + 2, 14, 2);
+      }
+      fill(...(c === "⏎" ? FARBE.blass : FARBE.text));
+      text(c, xx, yy);
+      xx += textWidth(c);
+    }
+    yy += 14;
+  }
+  return h;
 }
 
 // =============================================================================
@@ -1551,48 +1899,46 @@ function zeichneFreigaben() {
   const p = P_FREIGABE;
   panel(p);
   const x = p.x + 14;
-  const y = p.y + KOPF_H + 12;
+  const y = p.y + KOPF_H + 8;
+  const zh = Math.min(52, (p.h - KOPF_H - 34) / STUFEN.length);
   STUFEN.forEach((st, i) => {
-    const zy = y + i * 52;
+    const zy = y + i * zh;
     const ok = freigaben[i];
+    const r = Math.min(18, zh - 6);
     if (ok) {
       noStroke();
       fill(...FARBE.akzent);
-      circle(x + 12, zy + 14, 22);
+      circle(x + 9, zy + zh / 2, r);
       fill(255);
       textFont(SCHRIFT);
       textStyle(BOLD);
-      textSize(12);
+      textSize(10);
       textAlign(CENTER, CENTER);
-      text("✓", x + 12, zy + 15);
+      text("✓", x + 9, zy + zh / 2 + 1);
       textStyle(NORMAL);
     } else {
       noFill();
       stroke(...FARBE.linie);
-      strokeWeight(2);
+      strokeWeight(1.5);
       drawingContext.setLineDash([3, 3]);
-      circle(x + 12, zy + 14, 22);
+      circle(x + 9, zy + zh / 2, r);
       drawingContext.setLineDash([]);
     }
     noStroke();
     fill(...(i === stufe ? FARBE.akzent : ok ? FARBE.text : FARBE.blass));
     textFont(SCHRIFT);
     textStyle(i === stufe ? BOLD : NORMAL);
-    textSize(12.5);
-    textAlign(LEFT, TOP);
-    text(`${i + 1} · ${st.name}`, x + 30, zy + 2);
+    textSize(11.5);
+    textAlign(LEFT, CENTER);
+    text(`${i + 1} ${st.name}`, x + 24, zy + zh / 2 - 6);
     textStyle(NORMAL);
     fill(...(ok ? FARBE.grau : FARBE.blass));
-    textSize(11);
-    text(st.rang, x + 30, zy + 19);
+    textSize(9.5);
+    text(st.rang, x + 24, zy + zh / 2 + 7);
   });
   const anzahl = freigaben.filter((f) => f).length;
-  noStroke();
-  textFont(SCHRIFT);
-  textSize(11);
-  textAlign(LEFT, TOP);
-  fill(...(anzahl === 6 ? FARBE.akzent : FARBE.blass));
-  absatz(anzahl === 6 ? "Alle Räume geschafft: Der Tresor ist offen!" : `${anzahl} von 6 Prüfsiegeln`, x, y + 6 * 52, p.w - 28, 11, anzahl === 6 ? FARBE.akzent : FARBE.blass);
+  const alle = anzahl === STUFEN.length;
+  absatz(alle ? "Alle Räume geschafft: Der Tresor ist offen!" : `${anzahl} von ${STUFEN.length} Prüfsiegeln`, x, y + STUFEN.length * zh + 4, p.w - 28, 11, alle ? FARBE.akzent : FARBE.blass);
 }
 
 function zeichneStempel() {

@@ -238,3 +238,9 @@ button.ui.klein.aktiv {
   border-color: #c81e3a;
   color: #fff;
 }
+
+/* Raum-Reiter etwas kompakter (11 Räume) */
+button.ui.beispiel {
+  padding: 0 0.6em;
+  white-space: nowrap;
+}

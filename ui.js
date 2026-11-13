@@ -61,16 +61,16 @@ function erstelleUi() {
   ui.stufen = [];
   let bx = 104;
   STUFEN.forEach((st, i) => {
-    const text = `${i + 1} · ${st.name}`;
-    const b = 48 + text.length * 8.4;
+    const text = `${i + 1} ${st.kurz}`;
+    const b = 22 + (text.length + 2) * 8.4;
     const knopf = platziere(createButton(text), bx, 63, b, "beispiel");
-    knopf.attribute("title", `Freigabestufe ${i + 1}: ${st.rang}`);
+    knopf.attribute("title", `Raum ${i + 1}: ${st.name} (${st.thema}) – Freigabe als ${st.rang}`);
     knopf.mousePressed(() => {
       stufeWechseln(i);
       knopf.elt.blur();
     });
     ui.stufen.push(knopf);
-    bx += b + 10;
+    bx += b + 6;
   });
 
   // --- Üben ----------------------------------------------------------------------
@@ -223,7 +223,7 @@ function aktualisiereUi() {
   klasse(ui.modusPruef, "aktiv", !ueben);
   ui.stufen.forEach((k, i) => {
     klasse(k, "aktiv", i === stufe);
-    beschrifte(k, `${i + 1} · ${STUFEN[i].name}${freigaben[i] ? " ✓" : ""}`);
+    beschrifte(k, `${i + 1} ${STUFEN[i].kurz}${freigaben[i] ? " ✓" : ""}`);
   });
 
   zeige(ui.beispiel, ueben);
