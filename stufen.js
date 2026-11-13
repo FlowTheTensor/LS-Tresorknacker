@@ -12,6 +12,7 @@ function cpp(rumpf, vorher) {
 const STUFEN = [
   {
     id: "eingang",
+    themaKurz: "Datentypen",
     name: "Eingangshalle",
     kurz: "Halle",
     rang: "Neuling",
@@ -21,6 +22,7 @@ const STUFEN = [
   },
   {
     id: "bibliothek",
+    themaKurz: "Verzweigungen",
     name: "Bibliothek",
     kurz: "Bibliothek",
     rang: "Spurensucher",
@@ -30,6 +32,7 @@ const STUFEN = [
   },
   {
     id: "uhren",
+    themaKurz: "Schleifen",
     name: "Uhrenzimmer",
     kurz: "Uhren",
     rang: "Rätsellöser",
@@ -39,6 +42,7 @@ const STUFEN = [
   },
   {
     id: "schliessfach",
+    themaKurz: "Arrays",
     name: "Schließfachraum",
     kurz: "Fächer",
     rang: "Schließfachprofi",
@@ -48,6 +52,7 @@ const STUFEN = [
   },
   {
     id: "lager",
+    themaKurz: "vector",
     name: "Lagerhalle",
     kurz: "Lager",
     rang: "Lagerist",
@@ -57,6 +62,7 @@ const STUFEN = [
   },
   {
     id: "spiegel",
+    themaKurz: "Funktionen",
     name: "Spiegelsaal",
     kurz: "Spiegel",
     rang: "Schlossknacker",
@@ -66,6 +72,7 @@ const STUFEN = [
   },
   {
     id: "funk",
+    themaKurz: "Zeichenketten",
     name: "Funkraum",
     kurz: "Funk",
     rang: "Funker",
@@ -75,6 +82,7 @@ const STUFEN = [
   },
   {
     id: "archiv",
+    themaKurz: "struct",
     name: "Archiv",
     kurz: "Archiv",
     rang: "Archivar",
@@ -84,6 +92,7 @@ const STUFEN = [
   },
   {
     id: "labyrinth",
+    themaKurz: "Zeiger",
     name: "Labyrinth",
     kurz: "Labyrinth",
     rang: "Pfadfinder",
@@ -93,6 +102,7 @@ const STUFEN = [
   },
   {
     id: "kessel",
+    themaKurz: "Überlauf",
     name: "Kesselraum",
     kurz: "Kessel",
     rang: "Kesselmeister",
@@ -102,6 +112,7 @@ const STUFEN = [
   },
   {
     id: "tresor",
+    themaKurz: "Dateien",
     name: "Tresorraum",
     kurz: "Tresor",
     rang: "Tresorknacker",
