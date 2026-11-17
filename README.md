@@ -138,6 +138,7 @@ Beispiele für Prüfungsaufgaben (alle mit Zufallswerten):
 | „Automatisch“ oder **Leertaste** | ablaufen lassen / anhalten |
 | „Neustart“ oder **R** | Programm von vorn |
 | Tempo | langsam, mittel, schnell |
+| Mond / Sonne oben rechts | dunkles oder helles Farbschema; die Wahl wird im Browser gespeichert und gilt für alle Lernsituationen |
 
 ## Ideen für den Unterricht
 
@@ -162,6 +163,7 @@ Beispiele für Prüfungsaufgaben (alle mit Zufallswerten):
 | `ui.js` | Knöpfe, Auswahllisten, Eingabefelder |
 | `sketch.js` | Ablauf, Zeichnen: Quelltext, Code-Schloss mit Tür, Speicher, Schreibtischtest, Konsole, Rätselbericht |
 | `assets/logo-jps.png` | Logo der Jakob-Preh-Schule |
+| `assets/logo-jps-hell.png` | Logo in Weiß für das dunkle Farbschema |
 | `libraries/p5.min.js` | p5.js (lokal, damit die Seite auch offline läuft) |
 
 ### Ein eigenes Rätsel ergänzen
@@ -212,6 +214,7 @@ Am einfachsten in VS Code mit der Erweiterung **Live Server**: Rechtsklick auf `
   - Fehler, die eigentlich schon der Compiler meldet (z. B. eine unbekannte Variable), zeigt die Simulation erst beim Erreichen der Zeile.
 - `#include <string>` steht in allen Rätseln mit `string`. Bei den üblichen Compilern (g++/Code::Blocks, Visual Studio) klappt `string` meist auch ohne, weil `<iostream>` es mitbringt. Vom C++-Standard garantiert ist das aber nicht.
 - Fehler in `draw()` werden abgefangen und als Hinweis angezeigt, statt das Programm einzufrieren.
+- **Farbschema hell/dunkel:** Alle Farben stehen in zwei Paletten (`FARBE_HELL`, `FARBE_DUNKEL`); `FARBE` enthält die aktive Palette und wird beim Umschalten in place überschrieben. Die CSS-Variablen in `style.css` wechseln über die Klasse `dunkelmodus` am `<html>`-Element. Die Wahl steht im `localStorage` unter `jps-lernsituationen-farbschema` (ohne Speicher gilt die Systemeinstellung). Im dunklen Schema zeigt die Kopfzeile `assets/logo-jps-hell.png`.
 
 ## Lizenz
 
@@ -232,5 +235,5 @@ Vorschlag für die Namensnennung: *„Tresorknacker · Ein Escape-Room für C++�
 | Bestandteil | Rechte |
 |---|---|
 | `libraries/p5.min.js` | [p5.js](https://p5js.org), GNU LGPL 2.1 |
-| `assets/logo-jps.png` | Logo der Jakob-Preh-Schule – alle Rechte bei der Schule |
+| `assets/logo-jps.png`, `assets/logo-jps-hell.png` | Logo der Jakob-Preh-Schule – alle Rechte bei der Schule |
 | Schriften Quicksand, Inter, JetBrains Mono | über Google Fonts eingebunden, SIL Open Font License 1.1 |

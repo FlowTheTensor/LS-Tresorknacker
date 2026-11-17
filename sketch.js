@@ -74,7 +74,7 @@ const CODE = { x: 40, y: 126, w: 472, h: 486 };
 const TUER = { x: 526, y: 124, w: 384, h: 196 };
 const SPEICHER = { x: 526, y: 330, w: 384, h: 282 };
 
-const FARBE = {
+const FARBE_HELL = {
   papier: [251, 249, 245],
   flaeche: [255, 255, 255],
   flaeche2: [243, 238, 230],
@@ -89,7 +89,78 @@ const FARBE = {
   blau: [44, 92, 150],
   violett: [122, 74, 150],
   notiz: [255, 247, 214],
+  // Flächen und Schrift auf Flächen (für das dunkle Schema nötig)
+  textInvers: [255, 255, 255],
+  dunkelFlaeche: [29, 29, 28],
+  schatten: [29, 29, 28],
+  akzentFlaeche: [253, 240, 242],
+  akzentLinie: [240, 200, 208],
+  rotFlaeche: [251, 225, 230],
+  gruenFlaeche: [228, 241, 233],
+  neutral: [160, 155, 146], // inaktive Elemente
 };
+
+const FARBE_DUNKEL = {
+  papier: [22, 22, 21],
+  flaeche: [32, 31, 30],
+  flaeche2: [44, 42, 40],
+  linie: [62, 59, 55],
+  text: [236, 232, 224],
+  grau: [184, 178, 168],
+  blass: [140, 135, 126],
+  akzent: [236, 76, 98],
+  akzentHell: [255, 64, 92],
+  senf: [222, 166, 72],
+  gruen: [96, 186, 132],
+  blau: [104, 156, 222],
+  violett: [176, 136, 206],
+  notiz: [66, 60, 38],
+  textInvers: [22, 22, 21],
+  dunkelFlaeche: [70, 67, 62],
+  schatten: [0, 0, 0],
+  akzentFlaeche: [52, 27, 32],
+  akzentLinie: [104, 44, 56],
+  rotFlaeche: [72, 32, 40],
+  gruenFlaeche: [30, 54, 41],
+  neutral: [120, 116, 108], // inaktive Elemente
+};
+
+const FARBE = {};
+
+// --- Farbschema hell/dunkel ---------------------------------------------------
+// FARBE enthält immer die aktive Palette. Beim Umschalten werden die Arrays
+// in place überschrieben, damit Verweise wie [FARBE.blau, …] gültig bleiben.
+// Die Wahl gilt für alle Lernsituationen (gleicher localStorage-Schlüssel).
+const FARBSCHEMA_SCHLUESSEL = "jps-lernsituationen-farbschema";
+let dunkelModus = false;
+
+function setzeFarbschema(dunkel) {
+  dunkelModus = !!dunkel;
+  const quelle = dunkelModus ? FARBE_DUNKEL : FARBE_HELL;
+  for (const k in quelle) {
+    if (FARBE[k]) {
+      FARBE[k].splice(0, FARBE[k].length, ...quelle[k]);
+    } else {
+      FARBE[k] = quelle[k].slice();
+    }
+  }
+  document.documentElement.classList.toggle("dunkelmodus", dunkelModus);
+}
+
+function gespeichertesFarbschema() {
+  try {
+    const v = localStorage.getItem(FARBSCHEMA_SCHLUESSEL);
+    if (v === "dunkel" || v === "hell") {
+      return v === "dunkel";
+    }
+  } catch (e) {
+    // kein Speicher verfügbar (z. B. privater Modus) – Systemeinstellung nehmen
+  }
+  return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+}
+
+setzeFarbschema(gespeichertesFarbschema());
+
 
 const SYNTAX = {
   typ: [44, 92, 150],
@@ -476,7 +547,7 @@ function keyPressed() {
 // =============================================================================
 function panel(p) {
   noStroke();
-  fill(29, 29, 28, 10);
+  fill(...FARBE.schatten, 10);
   rect(p.x + 1, p.y + 3, p.w, p.h, 12);
   fill(...FARBE.flaeche);
   stroke(...FARBE.linie);
@@ -499,7 +570,7 @@ function panel(p) {
 }
 
 function hell(farbe, anteil) {
-  return [lerp(farbe[0], 255, anteil), lerp(farbe[1], 255, anteil), lerp(farbe[2], 255, anteil)];
+  return [lerp(farbe[0], FARBE.flaeche[0], anteil), lerp(farbe[1], FARBE.flaeche[1], anteil), lerp(farbe[2], FARBE.flaeche[2], anteil)];
 }
 
 function umbrechen(txt, maxBreite) {
@@ -578,9 +649,9 @@ function zeichneKopf() {
 
 function zeichneStufenLeiste() {
   noStroke();
-  fill(253, 240, 242);
+  fill(...FARBE.akzentFlaeche);
   rect(0, 56, W, LEISTE);
-  stroke(240, 200, 208);
+  stroke(...FARBE.akzentLinie);
   strokeWeight(1);
   line(0, 56 + LEISTE, W, 56 + LEISTE);
   noStroke();
@@ -677,7 +748,7 @@ function codeZeilen() {
 function zeichneCode() {
   const c = CODE;
   noStroke();
-  fill(250, 248, 244);
+  fill(...FARBE.papier);
   stroke(...FARBE.linie);
   strokeWeight(1);
   rect(c.x, c.y, c.w, c.h, 8);
@@ -698,7 +769,7 @@ function zeichneCode() {
     const yAlt = v && v.zeile ? c.y + 10 + (v.zeile - 1) * lh : yNeu;
     const y = lerp(yAlt, yNeu, weich(animT()));
     noStroke();
-    fill(...(s.fehler ? hell(FARBE.akzent, 0.8) : s.fertig ? hell(FARBE.gruen, 0.78) : [255, 228, 150]));
+    fill(...(s.fehler ? hell(FARBE.akzent, 0.8) : s.fertig ? hell(FARBE.gruen, 0.78) : hell(FARBE.senf, 0.68)));
     rect(c.x + 4, y, c.w - 8, lh, 4);
     fill(...(s.fehler ? FARBE.akzent : FARBE.text));
     textFont(MONO);
@@ -761,7 +832,7 @@ function zeichneRaumSymbol(id, x, y) {
   } else if (id === "bibliothek") {
     fill(...FARBE.akzent);
     rect(4, 6, 8, 26, 1);
-    fill(255);
+    fill(...FARBE.flaeche);
     rect(13, 10, 7, 22, 1);
     rect(21, 4, 9, 28, 1);
     push();
@@ -770,7 +841,7 @@ function zeichneRaumSymbol(id, x, y) {
     rect(0, -24, 6, 24, 1);
     pop();
   } else if (id === "uhren") {
-    fill(255);
+    fill(...FARBE.flaeche);
     circle(19, 18, 30);
     line(19, 18, 19, 8);
     line(19, 18, 26, 22);
@@ -778,7 +849,7 @@ function zeichneRaumSymbol(id, x, y) {
     fill(...FARBE.akzent);
     circle(19, 18, 4);
   } else if (id === "schliessfach") {
-    fill(255);
+    fill(...FARBE.flaeche);
     for (let i = 0; i < 3; i++) {
       rect(2 + i * 12, 4, 11, 28, 1);
     }
@@ -790,14 +861,14 @@ function zeichneRaumSymbol(id, x, y) {
   } else if (id === "spiegel") {
     fill(232, 238, 244);
     ellipse(19, 18, 26, 32);
-    stroke(255);
+    stroke(...FARBE.flaeche);
     line(12, 10, 16, 6);
     line(12, 16, 20, 7);
   } else if (id === "lager") {
     line(2, 30, 38, 30);
     circle(6, 34, 6);
     circle(34, 34, 6);
-    fill(255);
+    fill(...FARBE.flaeche);
     rect(6, 16, 12, 12, 1);
     rect(20, 16, 12, 12, 1);
     noStroke();
@@ -813,7 +884,7 @@ function zeichneRaumSymbol(id, x, y) {
     fill(...FARBE.akzent);
     circle(19, 12, 5);
   } else if (id === "archiv") {
-    fill(255);
+    fill(...FARBE.flaeche);
     rect(4, 14, 30, 20, 2);
     rect(8, 8, 22, 8, 1);
     line(14, 24, 24, 24);
@@ -829,7 +900,7 @@ function zeichneRaumSymbol(id, x, y) {
     fill(...FARBE.akzent);
     circle(31, 31, 5);
   } else if (id === "tresor") {
-    fill(255);
+    fill(...FARBE.flaeche);
     rect(3, 4, 32, 30, 3);
     circle(19, 19, 14);
     line(19, 19, 23, 15);
@@ -837,7 +908,7 @@ function zeichneRaumSymbol(id, x, y) {
     fill(...FARBE.akzent);
     circle(19, 19, 4);
   } else {
-    fill(255);
+    fill(...FARBE.flaeche);
     arc(19, 22, 34, 34, PI, TWO_PI, CHORD);
     stroke(...FARBE.akzent);
     line(19, 22, 30, 10);
@@ -961,7 +1032,7 @@ function zeichneTuer() {
   const breite = tw * (1 - offen * 0.82);
   fill(...hell(FARBE.akzent, 0.1));
   quad(tx, ty, tx + breite, ty + offen * 14, tx + breite, ty + th - offen * 14, tx, ty + th);
-  stroke(255, 255, 255, 60);
+  stroke(...FARBE.flaeche, 255, 255, 60);
   strokeWeight(1.5);
   noFill();
   if (offen < 0.5) {
@@ -1121,7 +1192,7 @@ function zeichneSpeicher() {
     fill(...hell(farbe, 0.93));
     rect(0, y, sp.w, h, 8);
     if (f.art === "funktion") {
-      stroke(255, 255, 255, 180);
+      stroke(...FARBE.flaeche, 255, 255, 180);
       strokeWeight(1);
       noFill();
       rect(3, y + 3, sp.w - 6, h - 6, 6);
@@ -1234,7 +1305,7 @@ function zeichneVariable(v, x, y, s, verschwindet, zeigeAdr, pos, zeiger) {
   drawingContext.setLineDash([]);
   noStroke();
   const alpha = verschwindet ? 110 : 255;
-  fill(91, 88, 82, alpha);
+  fill(...FARBE.grau, alpha);
   textFont(MONO);
   textSize(10.5);
   textAlign(LEFT, TOP);
@@ -1244,7 +1315,7 @@ function zeichneVariable(v, x, y, s, verschwindet, zeigeAdr, pos, zeiger) {
   }
   text(nm, x + 5, y + 3);
   textAlign(RIGHT, TOP);
-  fill(125, 122, 114, alpha);
+  fill(...FARBE.blass, alpha);
   textSize(8.5);
   let tn = v.alias ? "Referenz" : typName(z.t);
   while (textWidth(tn) > w - textWidth(nm) - 14 && tn.length > 3) {
@@ -1267,13 +1338,13 @@ function zeichneVariable(v, x, y, s, verschwindet, zeigeAdr, pos, zeiger) {
   text(wt, x + 5, y + h - (zeigeAdr ? 11 : 4));
   textStyle(NORMAL);
   if (z.t.k === "basis" && z.t.name === "char" && z.w !== undefined && z.w >= 32 && z.w <= 126) {
-    fill(125, 122, 114, alpha);
+    fill(...FARBE.blass, alpha);
     textSize(9);
     textAlign(RIGHT, BOTTOM);
     text(z.w, x + w - 4, y + h - (zeigeAdr ? 11 : 4));
   }
   if (zeigeAdr && !v.alias && z.adr) {
-    fill(150, 146, 138, alpha);
+    fill(...FARBE.blass, alpha);
     textSize(8);
     textAlign(LEFT, BOTTOM);
     text(hexAdr(z.adr), x + 5, y + h - 2);
@@ -1330,7 +1401,7 @@ function zeichneReihe(v, x, y, breite, s, verschwindet, pos) {
     const nullz = z.t.elem.name === "char" && e.w === 0;
     stroke(...(neu ? FARBE.akzent : [150, 146, 138]));
     strokeWeight(neu ? 2 : 1);
-    fill(...(neu ? hell(FARBE.akzent, 0.88) : nullz ? [226, 232, 240] : [236, 232, 224]));
+    fill(...(neu ? hell(FARBE.akzent, 0.88) : nullz ? [226, 232, 240] : FARBE.flaeche2));
     rect(cx, cy, zw - 3, 28, 3);
     noStroke();
     fill(...(e.w === undefined ? FARBE.blass : nullz ? FARBE.blau : FARBE.text), verschwindet ? 110 : 255);
@@ -1391,7 +1462,7 @@ function zeichneKarte(v, x, y, breite, h, s, verschwindet, pos, zeiger) {
   let yy = y + 22;
   const alpha = verschwindet ? 110 : 255;
   for (const zl of kartenZeilen(z)) {
-    fill(125, 122, 114, alpha);
+    fill(...FARBE.blass, alpha);
     textSize(10.5);
     textAlign(LEFT, TOP);
     text(zl.name, x + 10, yy);
@@ -1554,7 +1625,7 @@ function zeichneTafel() {
       fill(...hell(FARBE.akzent, 0.9));
       rect(x0, y, b, zeilenH - 1, 3);
     } else if (zi % 2) {
-      fill(248, 245, 240);
+      fill(...FARBE.papier);
       rect(x0, y, b, zeilenH - 1, 3);
     }
     fill(...FARBE.blass);
@@ -1725,7 +1796,7 @@ function zeichneBericht() {
   y += 22;
   // aktuelle Zeile
   if (s.zeile && sim.zeilen[s.zeile - 1] !== undefined) {
-    fill(...(s.fehler ? hell(FARBE.akzent, 0.88) : [255, 240, 196]));
+    fill(...(s.fehler ? hell(FARBE.akzent, 0.88) : hell(FARBE.senf, 0.8)));
     rect(x, y, b, 28, 6);
     fill(...FARBE.blass);
     textFont(MONO);
@@ -1781,7 +1852,7 @@ function zeichnePruefungsInfo(x, y, b) {
     const an = i < serie;
     push();
     translate(kx, y + 6);
-    stroke(...(an ? FARBE.senf : [205, 200, 190]));
+    stroke(...(an ? FARBE.senf : FARBE.neutral));
     strokeWeight(4);
     noFill();
     circle(10, 14, 18);
@@ -1958,16 +2029,16 @@ function zeichneStempel() {
   rotate(-0.18);
   scale(1 + fall * 1.5);
   noStroke();
-  fill(255, 255, 255, alpha * 0.85);
+  fill(...FARBE.flaeche, 255, 255, alpha * 0.85);
   circle(0, 0, 250);
   noFill();
-  stroke(200, 30, 58, alpha);
+  stroke(...FARBE.akzent, alpha);
   strokeWeight(7);
   circle(0, 0, 250);
   strokeWeight(2.5);
   circle(0, 0, 222);
   noStroke();
-  fill(200, 30, 58, alpha);
+  fill(...FARBE.akzent, alpha);
   textFont(TITEL);
   textStyle(BOLD);
   textAlign(CENTER, CENTER);
@@ -1986,7 +2057,7 @@ function zeichneFehlerMeldung() {
     return;
   }
   noStroke();
-  fill(200, 30, 58, 235);
+  fill(...FARBE.akzent, 235);
   rect(24, 846, 900, 34, 8);
   fill(255);
   textFont(SCHRIFT);
